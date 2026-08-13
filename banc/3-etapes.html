@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc 3 — formulaire à étapes</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<div>
+  <h1>3 · Formulaire à étapes</h1>
+  <p class="sous">une seule URL, trois écrans</p>
+
+  <div class="bandeau" id="bandeau">Étape 1 sur 3</div>
+
+  <form id="devis" onsubmit="return false">
+    <div class="etape visible" data-etape="1">
+      <fieldset><legend>Étape 1 — le conducteur</legend>
+        <div class="champ"><label for="prenom">Prénom</label>
+          <input type="text" id="prenom" name="prenom"></div>
+        <div class="champ"><label for="nom">Nom de famille</label>
+          <input type="text" id="nom" name="nom"></div>
+        <div class="champ"><label for="naiss">Date de naissance</label>
+          <input type="text" id="naiss" name="date_naissance" placeholder="JJ/MM/AAAA"></div>
+      </fieldset>
+    </div>
+
+    <div class="etape" data-etape="2">
+      <fieldset><legend>Étape 2 — le véhicule</legend>
+        <div class="champ"><label for="immat">Immatriculation</label>
+          <input type="text" id="immat" name="immatriculation"></div>
+        <div class="champ"><label for="marque">Marque</label>
+          <input type="text" id="marque" name="marque"></div>
+        <div class="champ"><label for="energie">Énergie</label>
+          <select id="energie" name="energie">
+            <option value="">-- Choisir --</option>
+            <option value="1">Essence</option>
+            <option value="2">Diesel</option>
+          </select></div>
+      </fieldset>
+    </div>
+
+    <div class="etape" data-etape="3">
+      <fieldset><legend>Étape 3 — le contrat</legend>
+        <div class="champ"><label for="effet">Date d'effet</label>
+          <input type="text" id="effet" name="date_effet" placeholder="JJ/MM/AAAA"></div>
+        <div class="champ"><label for="mail">Adresse e-mail</label>
+          <input type="email" id="mail" name="email"></div>
+      </fieldset>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="precedent">Précédent</button>
+      <button type="button" id="suivant">Suivant</button>
+    </div>
+  </form>
+</div>
+
+<div>
+  <h1>Verdict</h1>
+  <p class="sous">l'étape 1 survit-elle au passage à l'étape 3 ?</p>
+
+  <div class="carte">
+    <p class="note">
+      Le scénario remplit les trois étapes l'une après l'autre, exactement comme un
+      courtier, puis revient à l'étape 1 et demande à l'extension de tout remplir.
+      <b>Les champs des étapes masquées sont invisibles</b> au moment où l'extension
+      enregistre — c'est là que ça se joue.
+    </p>
+    <div class="actions">
+      <button class="fort" id="lancer">Relancer le scénario</button>
+      <span class="score" id="total">—</span>
+    </div>
+  </div>
+
+  <div class="carte">
+    <table>
+      <thead><tr><th></th><th>champ</th><th>tapé</th><th>restitué</th><th>étape</th></tr></thead>
+      <tbody id="verdict"></tbody>
+    </table>
+  </div>
+
+  <div class="carte">
+    <h2>Empreinte enregistrée</h2>
+    <p class="note">Ce que l'extension a retenu de la structure du formulaire, à la fin du parcours.</p>
+    <pre id="empreinte"></pre>
+  </div>
+
+  <div class="carte">
+    <h2>Journal du remplissage</h2>
+    <pre id="journal"></pre>
+  </div>
+</div>
+
+<script src="harnais.js"></script>
+<script src="../prototype/content.js"></script>
+<script>
+let etapeCourante = 1;
+
+function montrer(numero) {
+    etapeCourante = Math.min(3, Math.max(1, numero));
+
+    document.querySelectorAll(".etape").forEach((bloc) => {
+        bloc.classList.toggle("visible", Number(bloc.dataset.etape) === etapeCourante);
+    });
+
+    document.getElementById("bandeau").textContent = `Étape ${etapeCourante} sur 3`;
+}
+
+document.getElementById("suivant").addEventListener("click", () => montrer(etapeCourante + 1));
+document.getElementById("precedent").addEventListener("click", () => montrer(etapeCourante - 1));
+
+const SAISIE = [
+    ["#prenom", "Jean",                   "Prénom",             "1"],
+    ["#nom",    "DUPONT",                 "Nom",                "1"],
+    ["#naiss",  "07/03/1985",             "Date de naissance",  "1"],
+    ["#immat",  "AB-123-CD",              "Immatriculation",    "2"],
+    ["#marque", "RENAULT",                "Marque",             "2"],
+    ["#energie", "Essence",               "Énergie",            "2"],
+    ["#effet",  "01/09/2025",             "Date d'effet",       "3"],
+    ["#mail",   "jean.dupont@exemple.fr", "E-mail",             "3"]
+];
+
+async function scenario() {
+    Banc.vider();
+    montrer(1);
+
+    // Le parcours réel : on remplit une étape, on avance, et ainsi de suite.
+    for (const numero of ["1", "2", "3"]) {
+        montrer(Number(numero));
+
+        SAISIE.filter(([, , , etape]) => etape === numero)
+            .forEach(([cible, valeur]) => Banc.saisir(cible, valeur));
+
+        await Banc.attendre(800);
+    }
+
+    // Le courtier envoie le formulaire : c'est le meilleur moment pour figer.
+    document.getElementById("devis").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await Banc.attendre(300);
+
+    // Deuxième dossier, même formulaire : page vierge, on repart de l'étape 1.
+    Banc.vider();
+    montrer(1);
+
+    // Le courtier clique le bouton de l'extension SUR CHAQUE ÉTAPE : elle ne
+    // remplit que ce qui est visible, et rien ne la réveille au changement
+    // d'étape. On mesure donc ce qu'il obtient en jouant le jeu.
+    const lignes = [];
+    const journaux = [];
+
+    for (const numero of ["1", "2", "3"]) {
+        montrer(Number(numero));
+
+        const reponse = await Banc.remplir();
+
+        journaux.push(`— étape ${numero} —`);
+        journaux.push(...(reponse.journal.length === 0
+            ? ["    (rien)"]
+            : reponse.journal.map((l) => `    ${l.champ}  ${l.origine}  ·  ${l.score}`)));
+
+        lignes.push(...Banc.verifier(
+            SAISIE.filter(([, , , etape]) => etape === numero)
+                .map(([cible, valeur, quoi, etape]) => ({
+                    cible, quoi, attendu: valeur, note: `étape ${etape}, bouton cliqué`
+                }))
+        ));
+    }
+
+    Banc.rapport(lignes);
+    document.getElementById("journal").textContent = journaux.join("\n");
+
+    const memoire = Banc.stockage.formulaires || {};
+    const empreinte = Object.values(memoire)[0];
+
+    document.getElementById("empreinte").textContent = empreinte
+        ? `${empreinte.champs.length} champ(s) retenu(s) :\n` +
+          empreinte.champs.map((fiche) => `  ${fiche.selecteur}  ${fiche.libelle}  « ${fiche.valeur} »`).join("\n")
+        : "(aucune empreinte)";
+}
+
+document.getElementById("lancer").addEventListener("click", scenario);
+scenario();
+</script>
+</body>
+</html>

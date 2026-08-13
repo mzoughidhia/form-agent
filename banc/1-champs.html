@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc 1 — tous les types de champs</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<div>
+  <h1>1 · Tous les types de champs</h1>
+  <p class="sous">le cas nominal</p>
+
+  <form id="devis" onsubmit="return false">
+    <fieldset><legend>Identité</legend>
+      <div class="champ enligne">
+        <span>Civilité</span>
+        <label><input type="radio" name="civilite" value="M"> Monsieur</label>
+        <label><input type="radio" name="civilite" value="F"> Madame</label>
+      </div>
+      <div class="champ"><label for="prenom">Prénom</label>
+        <input type="text" id="prenom" name="prenom"></div>
+      <div class="champ"><label for="nom">Nom de famille</label>
+        <input type="text" id="nom" name="nom"></div>
+      <div class="champ"><label for="naiss">Date de naissance</label>
+        <input type="date" id="naiss" name="date_naissance"></div>
+    </fieldset>
+
+    <fieldset><legend>Coordonnées</legend>
+      <div class="champ"><label for="mail">Adresse e-mail</label>
+        <input type="email" id="mail" name="email"></div>
+      <div class="champ"><label for="tel">Téléphone</label>
+        <input type="tel" id="tel" name="telephone"></div>
+      <div class="champ"><label for="adr">Adresse postale</label>
+        <textarea id="adr" name="adresse" rows="2"></textarea></div>
+      <div class="champ"><label for="cp">Code postal</label>
+        <input type="text" id="cp" name="code_postal" maxlength="5"></div>
+      <div class="champ"><label for="ville">Ville</label>
+        <input type="text" id="ville" name="ville"></div>
+      <div class="champ"><label for="pays">Pays</label>
+        <select id="pays" name="pays">
+          <option value="">-- Choisir --</option>
+          <option value="fr">France</option>
+          <option value="be">Belgique</option>
+          <option value="tn">Tunisie</option>
+        </select></div>
+    </fieldset>
+
+    <fieldset><legend>Divers</legend>
+      <div class="champ"><label><input type="checkbox" id="news" name="newsletter"> Recevoir la newsletter</label></div>
+      <div class="champ"><label><input type="checkbox" id="cgu" name="conditions"> J'accepte les conditions générales</label></div>
+      <div class="champ"><label for="mdp">Mot de passe</label>
+        <input type="password" id="mdp" name="motdepasse"></div>
+      <div class="champ"><label for="ref">Référence (désactivé)</label>
+        <input type="text" id="ref" name="reference" value="REF-001" disabled></div>
+      <div class="champ"><label for="agence">Agence (lecture seule)</label>
+        <input type="text" id="agence" name="agence" value="Lyon 3e" readonly></div>
+      <input type="hidden" name="__jeton" value="ne doit pas bouger">
+    </fieldset>
+  </form>
+</div>
+
+<div>
+  <h1>Verdict</h1>
+  <p class="sous">saisir → enregistrer → vider → remplir → comparer</p>
+
+  <div class="carte">
+    <p class="note">
+      Le scénario tape les 12 champs comme le ferait un courtier, laisse l'extension
+      enregistrer, <b>vide tout</b>, puis lui demande de remplir. Chaque ligne compare ce
+      qui revient à ce qui avait été tapé.
+    </p>
+    <div class="actions">
+      <button class="fort" id="lancer">Relancer le scénario complet</button>
+      <span class="score" id="total">—</span>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2>Pas à pas</h2>
+    <p class="note">
+      Les mêmes quatre gestes, un par un, pour voir ce qui se passe entre chacun.
+      Regarde le formulaire à gauche après chaque clic.
+    </p>
+    <div class="actions">
+      <button id="pas1">1 · Saisir</button>
+      <button id="pas2">2 · Vider</button>
+      <button id="pas3">3 · Remplir</button>
+      <button id="pas0">Oublier tout</button>
+    </div>
+    <div class="bandeau" id="etatMemoire">mémoire vide</div>
+  </div>
+
+  <div class="carte">
+    <table>
+      <thead><tr><th></th><th>champ</th><th>tapé</th><th>restitué</th><th>attendu du moteur</th></tr></thead>
+      <tbody id="verdict"></tbody>
+    </table>
+  </div>
+
+  <div class="carte">
+    <h2>Journal du remplissage</h2>
+    <pre id="journal"></pre>
+  </div>
+</div>
+
+<script src="harnais.js"></script>
+<script src="../prototype/content.js"></script>
+<script>
+const SAISIE = [
+    ["input[name=civilite][value=M]", true,                  "Civilité (radio)",        "Monsieur"],
+    ["#prenom",  "Jean",                                     "Prénom",                  "Jean"],
+    ["#nom",     "DUPONT",                                   "Nom",                     "DUPONT"],
+    ["#naiss",   "1985-03-07",                               "Date de naissance",       "1985-03-07"],
+    ["#mail",    "jean.dupont@exemple.fr",                   "E-mail",                  "jean.dupont@exemple.fr"],
+    ["#tel",     "0612345678",                               "Téléphone",               "0612345678"],
+    ["#adr",     "12 rue des Lilas",                         "Adresse (textarea)",      "12 rue des Lilas"],
+    ["#cp",      "69003",                                    "Code postal",             "69003"],
+    ["#ville",   "Lyon",                                     "Ville",                   "Lyon"],
+    ["#pays",    "France",                                   "Pays (select)",           "France"],
+    ["#news",    true,                                       "Newsletter (case)",       "oui"],
+    ["#cgu",     true,                                       "Conditions (consentement)", "non"],
+    ["#mdp",     "secret",                                   "Mot de passe",            ""]
+];
+
+async function scenario() {
+    Banc.vider();
+
+    SAISIE.forEach(([cible, valeur]) => Banc.saisir(cible, valeur));
+
+    await Banc.attendre(800);          // DELAI_ENREGISTREMENT = 600 ms
+    Banc.vider();
+
+    const reponse = await Banc.remplir();
+
+    const attendus = SAISIE.map(([cible, , quoi, attendu]) => ({
+        cible, quoi, attendu,
+        note: quoi.includes("consentement") ? "jamais coché automatiquement"
+            : quoi.includes("Mot de passe") ? "type=password exclu"
+            : ""
+    }));
+
+    attendus.push(
+        { cible: "#ref", quoi: "Référence (disabled)", attendu: "REF-001", note: "ignoré, valeur d'origine" },
+        { cible: "#agence", quoi: "Agence (readonly)", attendu: "Lyon 3e", note: "ignoré, valeur d'origine" }
+    );
+
+    Banc.rapport(Banc.verifier(attendus));
+    Banc.journal(reponse.journal);
+}
+
+document.getElementById("lancer").addEventListener("click", scenario);
+
+// --- le même cycle, geste par geste ---------------------------------------
+function etatMemoire(texte, bon) {
+    const zone = document.getElementById("etatMemoire");
+    const appris = Object.keys(Banc.stockage.appris || {}).length;
+    const profil = Object.keys(Banc.stockage.profil || {}).length;
+    const formulaires = Object.keys(Banc.stockage.formulaires || {}).length;
+
+    zone.textContent = `${texte} — mémoire : ${profil} donnée(s) de profil, ` +
+        `${appris} champ(s) appris, ${formulaires} empreinte(s)`;
+    zone.className = bon ? "bandeau ok" : "bandeau";
+}
+
+document.getElementById("pas1").addEventListener("click", async () => {
+    SAISIE.forEach(([cible, valeur]) => Banc.saisir(cible, valeur));
+    etatMemoire("saisi — l'extension enregistre dans 600 ms", false);
+    await Banc.attendre(800);
+    etatMemoire("enregistré", true);
+});
+
+document.getElementById("pas2").addEventListener("click", () => {
+    Banc.vider();
+    etatMemoire("formulaire vidé (sans événement : rien n'est réenregistré)", false);
+});
+
+document.getElementById("pas3").addEventListener("click", async () => {
+    const reponse = await Banc.remplir();
+
+    Banc.journal(reponse.journal);
+    etatMemoire(`rempli : ${reponse.remplis} champ(s)`, reponse.remplis > 0);
+});
+
+document.getElementById("pas0").addEventListener("click", () => {
+    Object.keys(Banc.stockage).forEach((cle) => delete Banc.stockage[cle]);
+    Banc.vider();
+    document.getElementById("journal").textContent = "";
+    etatMemoire("tout oublié", false);
+});
+
+scenario();
+</script>
+</body>
+</html>

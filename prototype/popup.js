@@ -120,12 +120,74 @@ function peindreEtat(formulaires) {
     );
 }
 
-function rafraichir() {
-    chrome.storage.local.get(["profil", "appris", "formulaires"], (etat) => {
-        peindreProfil(etat.profil || {});
-        peindreAppris(etat.appris || {});
-        peindreEtat(etat.formulaires || {});
+// Le parcours vaut trente minutes : le temps d'un dossier, pas davantage.
+const PARCOURS_DUREE = 30 * 60 * 1000;
+
+function peindreParcours(parcours) {
+    const zone = document.getElementById("parcours");
+
+    zone.textContent = "";
+
+    if (!parcours || parcours.jusqua <= Date.now()) {
+        return;
+    }
+
+    const minutes = Math.ceil((parcours.jusqua - Date.now()) / 60000);
+    const site = parcours.origine.replace(/^https?:\/\//, "");
+
+    const texte = document.createElement("span");
+    texte.textContent = `Parcours en cours sur ${site} — encore ${minutes} min. `;
+
+    const arret = document.createElement("button");
+    arret.className = "lien";
+    arret.textContent = "Arrêter";
+    arret.addEventListener("click", () => {
+        chrome.storage.local.remove("parcours", () => {
+            rafraichir();
+            afficher("Parcours arrêté.");
+        });
     });
+
+    zone.append(texte, arret);
+}
+
+function rafraichir() {
+    chrome.storage.local.get(
+        ["profil", "appris", "formulaires", "parcours", "continuer"],
+        (etat) => {
+            peindreProfil(etat.profil || {});
+            peindreAppris(etat.appris || {});
+            peindreEtat(etat.formulaires || {});
+            peindreParcours(etat.parcours);
+
+            // Coché par défaut : c'est le comportement attendu d'un tunnel.
+            document.getElementById("continuer").checked = etat.continuer !== false;
+        }
+    );
+}
+
+document.getElementById("continuer").addEventListener("change", (evenement) => {
+    chrome.storage.local.set({ continuer: evenement.target.checked });
+});
+
+// Le clic sur « Remplir » vaut consentement pour la suite du parcours, mais
+// seulement sur ce site, et seulement pour trente minutes.
+function armerLeParcours(url) {
+    if (!document.getElementById("continuer").checked) {
+        return;
+    }
+
+    let origine;
+
+    try {
+        origine = new URL(url).origin;
+    } catch (erreur) {
+        return;
+    }
+
+    chrome.storage.local.set({
+        parcours: { origine, jusqua: Date.now() + PARCOURS_DUREE }
+    }, rafraichir);
 }
 
 // Envoie un message au content script de l'onglet actif.
@@ -144,7 +206,7 @@ async function versLaPage(charge, suite) {
             return;
         }
 
-        suite(reponse);
+        suite(reponse, onglet);
     });
 }
 
@@ -168,13 +230,22 @@ document.getElementById("fill").addEventListener("click", () => {
                 appris: etat.appris || {},
                 formulaires: etat.formulaires || {}
             },
-            (reponse) => {
+            (reponse, onglet) => {
+                // Le parcours s'arme même si cette page-ci n'a rien donné :
+                // la page suivante est peut-être celle qu'on connaît.
+                armerLeParcours(onglet.url);
+
                 if (!reponse || reponse.remplis === 0) {
                     afficher("Aucun champ reconnu sur cette page.", true);
                     return;
                 }
 
-                afficher(`${reponse.remplis} champ(s) rempli(s).`);
+                afficher(
+                    `${reponse.remplis} champ(s) rempli(s).` +
+                    (document.getElementById("continuer").checked
+                        ? " Les pages suivantes se rempliront toutes seules."
+                        : "")
+                );
             }
         );
     });

@@ -94,8 +94,14 @@ const REGLES = [
             { motif: /\b(adresse|address)\b/, poids: 30 },
             { motif: /\bdomicile\b/, poids: 30 }
         ],
-        // "adresse e-mail" et "adresse IP" ne sont pas une adresse postale
-        interdits: [/\b(e ?mail|mail|courriel)\b/, /\bip\b/]
+        // "adresse e-mail", "adresse IP" et "complément d'adresse" ne sont
+        // pas l'adresse postale — le dernier recevait la rue entière.
+        interdits: [
+            /\b(e ?mail|mail|courriel)\b/,
+            /\bip\b/,
+            /\bcomplement\b/,
+            /\b(batiment|escalier|etage|lieu dit)\b/
+        ]
     },
     {
         cle: "codePostal",
@@ -598,12 +604,18 @@ function ecrireChamp(champ, valeur) {
 }
 
 // ---------------------------------------------------------------------------
+// Un champ qu'on ne touche jamais : la page l'a verrouillé.
 function ignorer(champ) {
-    // getClientRects() plutôt que offsetParent : ce dernier vaut null
-    // sur les éléments en position:fixed, pourtant bien visibles.
-    return champ.disabled ||
-        champ.readOnly ||
-        champ.getClientRects().length === 0;
+    return champ.disabled || champ.readOnly;
+}
+
+// Visible à l'écran maintenant. Sert à signaler ce qu'on a écrit sans que
+// le courtier puisse le relire — pas à décider si on l'écrit.
+//
+// getClientRects() plutôt que offsetParent : ce dernier vaut null sur les
+// éléments en position:fixed, pourtant bien visibles.
+function estVisible(champ) {
+    return champ.getClientRects().length > 0;
 }
 
 function estConsentement(champ) {
@@ -785,6 +797,15 @@ let minuteur = null;
 let enCoursDeRemplissage = false;
 
 function enregistrer(formulaire) {
+
+    // L'extension a été rechargée pendant que l'onglet était ouvert : le
+    // script est orphelin. Un avertissement clair vaut mieux qu'une erreur
+    // rouge à chaque frappe.
+    if (!contexteVivant()) {
+        console.warn("Form Agent : extension rechargée — recharge la page (F5).");
+        return;
+    }
+
     const releve = observer(formulaire);
     const renseignes = releve.empreinte.champs
         .filter((fiche) => fiche.valeur).length;
@@ -885,7 +906,8 @@ function remplir(profil, appris, formulaires) {
 
             journal.push({
                 champ: fiche.selecteur,
-                origine: `structure » ${fiche.libelle || fiche.type}`,
+                origine: `structure » ${fiche.libelle || fiche.type}` +
+                    (estVisible(champ) ? "" : "  [masqué]"),
                 score: 100
             });
         });
@@ -933,7 +955,7 @@ function remplir(profil, appris, formulaires) {
 
             journal.push({
                 champ: champ.name || champ.id || "(sans nom)",
-                origine,
+                origine: origine + (estVisible(champ) ? "" : "  [masqué]"),
                 score: note
             });
         });
@@ -956,6 +978,105 @@ function etat() {
     });
 
     return { url: location.origin + location.pathname, formulaires: connus };
+}
+
+// ===========================================================================
+//  LE PARCOURS — remplir les pages suivantes
+//
+//  Un formulaire réparti sur plusieurs URL ne peut pas être rempli d'un seul
+//  clic : les autres pages n'existent pas encore dans le navigateur. Ce qui
+//  est possible, c'est de retenir que le courtier a cliqué « Remplir », et
+//  de remplir chaque page du parcours au moment où elle s'affiche — puis à
+//  chaque fois que de nouveaux champs apparaissent.
+//
+//  Trois limites, qui sont le prix de la sécurité :
+//    - le clic vaut consentement, mais seulement pour CE site
+//    - il expire au bout de trente minutes
+//    - il ne survit pas à un « Arrêter le parcours » depuis le popup
+// ===========================================================================
+
+const AUTO_MAX = 5;            // garde-fou anti-boucle sur les pages agitées
+const AUTO_DELAI = 400;        // ms d'accalmie avant de retenter
+
+// Le parcours armé vaut-il pour la page où l'on se trouve ?
+function parcoursActif(etat) {
+    const parcours = etat.parcours;
+
+    return Boolean(parcours) &&
+        parcours.origine === location.origin &&
+        parcours.jusqua > Date.now();
+}
+
+let autoRestants = AUTO_MAX;
+let minuteurAuto = null;
+
+// Le contexte meurt quand l'extension est rechargée : l'onglet garde un
+// script fantôme. Mieux vaut se taire que lever une erreur à chaque frappe.
+function contexteVivant() {
+    return Boolean(chrome.runtime && chrome.runtime.id);
+}
+
+function remplirDepuisLaMemoire(origine) {
+    if (!contexteVivant() || autoRestants <= 0) {
+        return;
+    }
+
+    chrome.storage.local.get(
+        ["profil", "appris", "formulaires", "parcours"],
+        (etat) => {
+
+        if (!parcoursActif(etat)) {
+            return;
+        }
+
+        autoRestants -= 1;
+        enCoursDeRemplissage = true;
+
+        const journal = remplir(
+            etat.profil || {},
+            etat.appris || {},
+            etat.formulaires || {}
+        );
+
+        setTimeout(() => { enCoursDeRemplissage = false; }, 300);
+
+        if (journal.length > 0) {
+            console.log(`Form Agent — ${journal.length} champ(s) remplis (${origine})`);
+            console.table(journal);
+        }
+    });
+}
+
+function surveillerLaPage() {
+    // Les champs arrivent souvent après la page : appel AJAX, étape suivante
+    // d'un tunnel, bloc déplié par un bouton.
+    new MutationObserver(() => {
+        clearTimeout(minuteurAuto);
+        minuteurAuto = setTimeout(
+            () => remplirDepuisLaMemoire("nouveaux champs"),
+            AUTO_DELAI
+        );
+    }).observe(document.documentElement, { childList: true, subtree: true });
+}
+
+if (contexteVivant()) {
+    chrome.storage.local.get("parcours", (etat) => {
+
+        if (!parcoursActif(etat)) {
+            return;
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener(
+                "DOMContentLoaded",
+                () => remplirDepuisLaMemoire("chargement")
+            );
+        } else {
+            remplirDepuisLaMemoire("chargement");
+        }
+
+        surveillerLaPage();
+    });
 }
 
 // ---------------------------------------------------------------------------

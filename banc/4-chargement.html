@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc 4 — chargement différé et navigation sans rechargement</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<div>
+  <h1>4 · Chargement différé</h1>
+  <p class="sous">le formulaire n'est pas là quand la page l'est</p>
+
+  <div class="bandeau" id="bandeau">Page A — chargement en cours…</div>
+
+  <form id="devis" onsubmit="return false">
+    <fieldset><legend>Contact</legend>
+      <div class="champ"><label for="prenom">Prénom</label>
+        <input type="text" id="prenom" name="prenom"></div>
+      <div id="tardif"></div>
+    </fieldset>
+  </form>
+
+  <div class="actions">
+    <button type="button" id="naviguer">Aller à la page B (sans recharger)</button>
+  </div>
+</div>
+
+<div>
+  <h1>Verdict</h1>
+  <p class="sous">deux pièges : le délai, et l'URL qui change toute seule</p>
+
+  <div class="carte">
+    <p class="note">
+      Trois temps. <b>1.</b> On demande à remplir <b>avant</b> que les champs différés
+      n'arrivent (800 ms d'attente serveur simulés). <b>2.</b> Une fois arrivés, on
+      redemande. <b>3.</b> On navigue vers « page B » par <code>history.pushState</code> —
+      l'URL change, la page non.
+    </p>
+    <div class="actions">
+      <button class="fort" id="lancer">Relancer le scénario</button>
+      <span class="score" id="total">—</span>
+    </div>
+  </div>
+
+  <div class="carte">
+    <table>
+      <thead><tr><th></th><th>moment</th><th>attendu</th><th>obtenu</th><th>ce que ça dit</th></tr></thead>
+      <tbody id="verdict"></tbody>
+    </table>
+  </div>
+
+  <div class="carte">
+    <h2>Empreintes enregistrées</h2>
+    <pre id="empreintes"></pre>
+  </div>
+</div>
+
+<script src="harnais.js"></script>
+<script src="../prototype/content.js"></script>
+<script>
+const DELAI_SERVEUR = 800;
+
+function chargerChampsTardifs() {
+    document.getElementById("tardif").innerHTML = `
+        <div class="champ"><label for="mail">Adresse e-mail</label>
+          <input type="email" id="mail" name="email"></div>
+        <div class="champ"><label for="tel">Téléphone</label>
+          <input type="tel" id="tel" name="telephone"></div>`;
+    document.getElementById("bandeau").textContent = "Page A — champs chargés";
+    document.getElementById("bandeau").className = "bandeau ok";
+}
+
+function vers(chemin, titre) {
+    history.pushState({}, "", chemin);
+    document.getElementById("bandeau").textContent = titre;
+    document.getElementById("bandeau").className = "bandeau";
+}
+
+document.getElementById("naviguer").addEventListener("click", () => vers("?page=b", "Page B"));
+
+async function scenario() {
+    const lignes = [];
+
+    // --- remise à zéro complète -------------------------------------------
+    history.replaceState({}, "", location.pathname);
+    document.getElementById("tardif").innerHTML = "";
+    Banc.vider();
+    Object.keys(Banc.stockage).forEach((cle) => delete Banc.stockage[cle]);
+
+    // --- 1. apprentissage sur les champs immédiats -------------------------
+    Banc.saisir("#prenom", "Jean");
+    await Banc.attendre(800);
+
+    // --- 2. on remplit AVANT que les champs différés n'arrivent ------------
+    Banc.vider();
+    setTimeout(chargerChampsTardifs, DELAI_SERVEUR);
+    let reponse = await Banc.remplir();
+
+    lignes.push({
+        quoi: "1. remplir avant le chargement",
+        attendu: "Jean",
+        obtenu: Banc.lire(document.getElementById("prenom")),
+        ok: Banc.lire(document.getElementById("prenom")) === "Jean",
+        note: "les champs présents sont remplis"
+    });
+
+    lignes.push({
+        quoi: "1. les champs différés",
+        attendu: "(absents)",
+        obtenu: document.getElementById("mail") ? "présents" : "(absents)",
+        ok: !document.getElementById("mail"),
+        note: "rien à remplir, l'extension ne les verra jamais"
+    });
+
+    // --- 3. ils arrivent : on apprend, puis on redemande -------------------
+    await Banc.attendre(DELAI_SERVEUR + 200);
+    Banc.saisir("#mail", "jean.dupont@exemple.fr");
+    Banc.saisir("#tel", "0612345678");
+    await Banc.attendre(800);
+    Banc.vider();
+
+    reponse = await Banc.remplir();
+
+    lignes.push({
+        quoi: "2. remplir après le chargement",
+        attendu: "jean.dupont@exemple.fr",
+        obtenu: Banc.lire(document.getElementById("mail")),
+        ok: Banc.lire(document.getElementById("mail")) === "jean.dupont@exemple.fr",
+        note: "aucune reprise automatique : il faut redemander"
+    });
+
+    // --- 4. navigation sans rechargement -----------------------------------
+    vers("?page=b", "Page B");
+    Banc.vider();
+    reponse = await Banc.remplir();
+
+    lignes.push({
+        quoi: "3. après history.pushState",
+        attendu: "Jean",
+        obtenu: Banc.lire(document.getElementById("prenom")),
+        ok: Banc.lire(document.getElementById("prenom")) === "Jean",
+        note: "l'empreinte est indexée sur l'URL — la mémoire transversale prend le relais"
+    });
+
+    const stock = Banc.stockage.formulaires || {};
+
+    document.getElementById("empreintes").textContent =
+        Object.entries(stock).map(([cle, empreinte]) =>
+            `${cle}\n    ${empreinte.champs.length} champ(s) : ` +
+            empreinte.champs.map((fiche) => fiche.libelle || fiche.selecteur).join(", ")
+        ).join("\n\n") || "(aucune)";
+
+    Banc.rapport(lignes);
+    history.replaceState({}, "", location.pathname);
+}
+
+document.getElementById("lancer").addEventListener("click", scenario);
+scenario();
+</script>
+</body>
+</html>

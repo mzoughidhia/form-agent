@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Sous-formulaire</title>
+<style>
+  body { font-family: system-ui, sans-serif; font-size: 13px; margin: 0; padding: 10px;
+         background: #fff; color: #131821; }
+  label { display: block; margin-bottom: 2px; }
+  input { padding: 4px 6px; font: inherit; border: 1px solid #dce1ea; border-radius: 2px; }
+  p { color: #7b8496; font-size: 11.5px; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<form onsubmit="return false">
+  <label for="prenom">Prénom</label>
+  <input type="text" id="prenom" name="prenom">
+</form>
+<p>Ce formulaire vit dans un document séparé. Sans <code>all_frames</code>, le content
+script ne s'y exécute pas.</p>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entraînement 4 — page 3 sur 3</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Parcours en trois pages</h1>
+<p class="sous">entraînement 4 · page 3 sur 3</p>
+
+<div class="mode">
+  Dernière page. Elle redemande <b>l'e-mail et le téléphone</b> : si l'extension a bien
+  travaillé, ces deux-là doivent revenir tout seuls même sans avoir jamais été saisis
+  <i>sur cette page</i>. C'est la mémoire transversale qui joue.
+</div>
+
+<form onsubmit="event.preventDefault(); document.getElementById('merci').classList.add('visible');">
+  <fieldset><legend>Étape 3 — comment vous joindre</legend>
+    <div class="champ"><label for="mail">Adresse e-mail</label>
+      <input type="email" id="mail" name="email"></div>
+    <div class="champ"><label for="tel">Téléphone portable</label>
+      <input type="tel" id="tel" name="telephone"></div>
+    <div class="champ"><label for="creneau">Créneau de rappel</label>
+      <select id="creneau" name="creneau">
+        <option value="">-- Choisir --</option>
+        <option value="M">Matin</option>
+        <option value="A">Après-midi</option>
+        <option value="S">Soirée</option>
+      </select></div>
+    <div class="champ"><label for="remarque">Remarque</label>
+      <textarea id="remarque" name="remarque" rows="3"></textarea></div>
+    <div class="champ enligne">
+      <label><input type="checkbox" name="conditions"> J'accepte les conditions générales</label>
+    </div>
+  </fieldset>
+
+  <div class="barre">
+    <a class="bouton" href="4-page-2.html">← Retour</a>
+    <button type="submit" class="principal">Envoyer ma demande</button>
+  </div>
+
+  <div class="merci" id="merci">Demande envoyée. Parcours terminé.</div>
+</form>
+
+<p class="aide" style="margin-top:16px"><a href="index.html">← retour au sommaire</a></p>
+
+</body>
+</html>

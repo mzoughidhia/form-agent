@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entraînement 1 — tous les types de champs</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Tous les types de champs</h1>
+<p class="sous">entraînement 1 · devis auto</p>
+
+<div class="mode">
+  <b>Comment entraîner l'extension sur cette page</b>
+  <ol>
+    <li>Remplis le formulaire <b>à la main</b>, sans rien cliquer d'autre.</li>
+    <li>Attends une seconde : l'enregistrement se fait tout seul.</li>
+    <li>Ouvre le popup — il doit dire « Formulaire mémorisé ».</li>
+    <li><code>F5</code> pour vider, puis popup → <b>Remplir ce formulaire</b>.</li>
+  </ol>
+</div>
+
+<form onsubmit="event.preventDefault(); document.getElementById('merci').classList.add('visible');">
+
+  <fieldset><legend>Souscripteur</legend>
+    <div class="champ enligne">
+      <label><input type="radio" name="civilite" value="1"> Monsieur</label>
+      <label><input type="radio" name="civilite" value="2"> Madame</label>
+    </div>
+    <div class="champ"><label for="nom">Nom de famille</label>
+      <input type="text" id="nom" name="nom"></div>
+    <div class="champ"><label for="prenom">Prénom</label>
+      <input type="text" id="prenom" name="prenom"></div>
+    <div class="champ"><label for="naiss">Date de naissance</label>
+      <input type="date" id="naiss" name="date_naissance"></div>
+    <div class="champ"><label for="situation">Situation familiale</label>
+      <select id="situation" name="situation">
+        <option value="">-- Choisir --</option>
+        <option value="C">Célibataire</option>
+        <option value="M">Marié(e)</option>
+        <option value="P">Pacsé(e)</option>
+        <option value="V">Veuf(ve)</option>
+      </select></div>
+    <div class="champ"><label for="enfants">Nombre d'enfants</label>
+      <input type="number" id="enfants" name="nb_enfants" min="0" max="10"></div>
+  </fieldset>
+
+  <fieldset><legend>Coordonnées</legend>
+    <div class="champ"><label for="mail">Adresse e-mail</label>
+      <input type="email" id="mail" name="email"></div>
+    <div class="champ"><label for="tel">Téléphone portable</label>
+      <input type="tel" id="tel" name="telephone"></div>
+    <div class="champ"><label for="adresse">Adresse postale</label>
+      <textarea id="adresse" name="adresse" rows="2"></textarea></div>
+    <div class="champ"><label for="cp">Code postal</label>
+      <input type="text" id="cp" name="code_postal" maxlength="5"></div>
+    <div class="champ"><label for="ville">Ville</label>
+      <input type="text" id="ville" name="ville"></div>
+    <div class="champ"><label for="pays">Pays</label>
+      <select id="pays" name="pays">
+        <option value="">-- Choisir --</option>
+        <option value="fr">France</option>
+        <option value="be">Belgique</option>
+        <option value="ch">Suisse</option>
+        <option value="tn">Tunisie</option>
+      </select></div>
+    <div class="champ"><label for="site">Site internet</label>
+      <input type="url" id="site" name="site_web" placeholder="https://"></div>
+  </fieldset>
+
+  <fieldset><legend>Le contrat</legend>
+    <div class="champ"><label for="effet">Date d'effet souhaitée</label>
+      <input type="date" id="effet" name="date_effet"></div>
+    <div class="champ"><label for="heure">Heure de rappel</label>
+      <input type="time" id="heure" name="heure_rappel"></div>
+    <div class="champ"><label for="echeance">Mois d'échéance</label>
+      <input type="month" id="echeance" name="mois_echeance"></div>
+    <div class="champ"><label for="franchise">Franchise (€)</label>
+      <input type="number" id="franchise" name="franchise" step="10"></div>
+    <div class="champ"><label for="km">Kilométrage annuel</label>
+      <input type="range" id="km" name="kilometrage" min="0" max="40000" step="1000">
+      <p class="aide">Un curseur : l'extension peut-elle le repositionner ?</p></div>
+    <div class="champ enligne">
+      <label><input type="checkbox" id="news" name="newsletter"> Recevoir les offres par e-mail</label><br>
+      <label><input type="checkbox" id="cgu" name="conditions"> J'accepte les conditions générales</label>
+      <p class="aide">La seconde case ne doit <b>jamais</b> être cochée automatiquement.</p>
+    </div>
+  </fieldset>
+
+  <fieldset><legend>Ce qui doit rester intact</legend>
+    <div class="champ"><label for="ref">Référence du devis</label>
+      <input type="text" id="ref" name="reference" value="DV-2026-0417" readonly></div>
+    <div class="champ"><label for="agence">Agence</label>
+      <input type="text" id="agence" name="agence" value="Lyon 3e" disabled></div>
+    <div class="champ"><label for="mdp">Mot de passe de l'espace client</label>
+      <input type="password" id="mdp" name="motdepasse"></div>
+    <input type="hidden" name="jeton" value="abc123">
+  </fieldset>
+
+  <div class="barre">
+    <button type="submit" class="principal">Envoyer la demande</button>
+    <button type="reset">Effacer</button>
+  </div>
+
+  <div class="merci" id="merci">Demande envoyée. L'extension a figé la structure à cet instant.</div>
+</form>
+
+<p class="aide" style="margin-top:16px"><a href="index.html">← retour au sommaire</a></p>
+
+</body>
+</html>

@@ -179,6 +179,33 @@
             width: 100%;
             margin-top: 4px;
         }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin: 10px 0 2px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .option input {
+            width: auto;
+            margin: 0;
+        }
+
+        .aide.indente {
+            margin: 0 0 10px 24px;
+        }
+
+        #parcours:not(:empty) {
+            background: #e8f5e9;
+            border-left: 3px solid #2e7d32;
+            color: #1b5e20;
+            padding: 7px 10px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
     </style>
 </head>
 
@@ -192,6 +219,17 @@
     </p>
 
     <button id="fill">Remplir ce formulaire</button>
+
+    <label class="option">
+        <input type="checkbox" id="continuer" checked>
+        Continuer sur les pages suivantes
+    </label>
+    <p class="aide indente">
+        Formulaire en plusieurs pages : après ce clic, chaque page de ce site se
+        remplit toute seule pendant 30 minutes. Tu n'as plus qu'à naviguer.
+    </p>
+
+    <div id="parcours"></div>
 
     <div id="etat">Lecture de la page…</div>
 

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Terrain d'entraînement — Form Agent Test</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Terrain d'entraînement</h1>
+<p class="sous">extension « Form Agent Test »</p>
+
+<div class="mode">
+  <b>Le cycle, sur chaque page :</b>
+  <ol>
+    <li><b>Remplis à la main.</b> Ne clique rien : l'enregistrement part tout seul,
+        600 ms après ta dernière frappe.</li>
+    <li><b>Ouvre le popup.</b> Il doit dire « Formulaire mémorisé, N champs relevés ».
+        S'il dit « pas encore été observé », rien n'a été capté.</li>
+    <li><b><code>F5</code></b> pour vider la page.</li>
+    <li><b>Popup → Remplir ce formulaire.</b> Les champs remplis clignotent en vert.</li>
+  </ol>
+  Pour repartir de zéro : popup → <b>Oublier ce formulaire</b> et
+  <b>Vider la mémoire apprise</b>.
+</div>
+
+<form>
+  <nav>
+    <a href="1-tous-les-champs.html">1 · Tous les types de champs
+      <span>texte, date, heure, mois, nombre, curseur, e-mail, tél, URL, liste, radio, case,
+      zone de texte — plus mot de passe, désactivé, lecture seule et case de consentement</span></a>
+
+    <a href="2-piege.html">2 · Formulaire piégé
+      <span>aucun <code>name</code> parlant, libellés en cellule voisine ou placés après le
+      champ, et quatre faux amis : nom d'utilisateur, adresse IP, contact d'urgence, mot de passe</span></a>
+
+    <a href="3-etapes.html">3 · Formulaire à étapes
+      <span>quatre écrans dans une seule URL, boutons Précédent / Suivant — le tunnel de devis classique</span></a>
+
+    <a href="4-page-1.html">4 · Parcours en trois pages
+      <span>vraie pagination : une URL par étape, donc une empreinte par étape. La dernière
+      page redemande l'e-mail et le téléphone</span></a>
+
+    <a href="5-boutons.html">5 · Tous les types de boutons
+      <span>champs révélés par <code>&lt;button&gt;</code>, <code>role="button"</code> ou un lien ;
+      lignes répétées ; cinq façons d'envoyer, dont deux qui n'émettent aucun <code>submit</code></span></a>
+  </nav>
+</form>
+
+<h2>Ce qu'il faut surveiller à chaque essai</h2>
+<p class="aide">
+  <b>1.</b> La case « J'accepte les conditions générales » doit rester <b>décochée</b> —
+  si elle se coche un jour, c'est une régression grave.<br>
+  <b>2.</b> Le mot de passe ne doit <b>jamais</b> être rempli.<br>
+  <b>3.</b> Les champs en lecture seule et désactivés doivent garder leur valeur d'origine.<br>
+  <b>4.</b> Ouvre la console (<code>F12</code>) : l'extension y écrit un tableau à chaque
+  remplissage — champ, origine (<code>structure</code>, <code>regle</code>,
+  <code>appris</code>) et score. C'est le seul endroit qui dit <i>pourquoi</i> un champ a
+  été rempli.
+</p>
+
+<h2>Si le popup dit « Impossible d'agir sur cette page »</h2>
+<p class="aide">
+  Le content script n'est pas dans l'onglet. Ouvre la page en <code>http://localhost:4173/…</code>
+  et non en <code>file://</code>, puis recharge l'extension (↻ dans <code>chrome://extensions</code>)
+  <b>et</b> la page (<code>F5</code>).
+</p>
+
+</body>
+</html>

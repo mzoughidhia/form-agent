@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "banc",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--input-type=commonjs",
+        "-e",
+        "const h=require('http'),f=require('fs'),p=require('path');const r=p.resolve('.');const T={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};h.createServer((q,s)=>{let u=decodeURIComponent(q.url.split('?')[0]);if(u==='/favicon.ico'){s.writeHead(204);return s.end();}if(u==='/')u='/entrainement/index.html';let c=p.join(r,u);if(c.startsWith(r)&&f.existsSync(c)&&f.statSync(c).isDirectory())c=p.join(c,'index.html');if(!c.startsWith(r)||!f.existsSync(c)||f.statSync(c).isDirectory()){s.writeHead(404,{'content-type':'text/html; charset=utf-8'});return s.end('<h1>404</h1><p>Introuvable : '+u+'</p><ul><li><a href=\"/entrainement/\">/entrainement/</a> — terrain d entrainement</li><li><a href=\"/banc/\">/banc/</a> — banc d essai automatique</li><li><a href=\"/prototype/test2.html\">/prototype/test2.html</a></li></ul>');}s.writeHead(200,{'content-type':T[p.extname(c)]||'text/plain; charset=utf-8'});s.end(f.readFileSync(c));}).listen(4173,()=>console.log('http://localhost:4173'));"
+      ],
+      "port": 4173
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc 5 — cadre applicatif, select et iframe</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<div>
+  <h1>5 · Cadre applicatif, select, iframe</h1>
+  <p class="sous">les trois pièges qui coûtent un devis</p>
+
+  <form id="devis" onsubmit="return false">
+    <fieldset><legend>Champ contrôlé par le cadre (façon React)</legend>
+      <div class="champ"><label for="prenom">Prénom</label>
+        <input type="text" id="prenom" name="prenom"></div>
+      <div class="bandeau" id="etatCadre">état du cadre : (vide)</div>
+      <p class="note">
+        Ce que le serveur recevrait, c'est <b>l'état du cadre</b> — pas ce qui est affiché.
+      </p>
+    </fieldset>
+
+    <fieldset><legend>Liste où le texte n'est pas la valeur</legend>
+      <div class="champ"><label for="energie">Énergie</label>
+        <select id="energie" name="energie">
+          <option value="">-- Choisir --</option>
+          <option value="7">Essence</option>
+          <option value="12">Diesel</option>
+          <option value="3">Électrique</option>
+        </select></div>
+      <div class="champ"><label for="situation">Situation familiale</label>
+        <select id="situation" name="situation_familiale">
+          <option value="">-- Choisir --</option>
+          <option value="C">Célibataire</option>
+          <option value="M">Marié(e)</option>
+          <option value="P">Pacsé(e)</option>
+        </select></div>
+    </fieldset>
+  </form>
+
+  <fieldset><legend>Formulaire dans un iframe</legend>
+    <iframe id="cadre" src="5-iframe.html" style="width:100%;height:130px;border:1px solid #dce1ea"></iframe>
+  </fieldset>
+</div>
+
+<div>
+  <h1>Verdict</h1>
+  <p class="sous">rempli à l'écran ≠ reçu par le serveur</p>
+
+  <div class="carte">
+    <div class="actions">
+      <button class="fort" id="lancer">Relancer le scénario</button>
+      <span class="score" id="total">—</span>
+    </div>
+  </div>
+
+  <div class="carte">
+    <table>
+      <thead><tr><th></th><th>cas</th><th>attendu</th><th>obtenu</th><th>ce que ça dit</th></tr></thead>
+      <tbody id="verdict"></tbody>
+    </table>
+  </div>
+
+  <div class="carte">
+    <h2>Journal du remplissage</h2>
+    <pre id="journal"></pre>
+  </div>
+</div>
+
+<script src="harnais.js"></script>
+<script src="../prototype/content.js"></script>
+<script>
+// ---------------------------------------------------------------------------
+//  Reproduction fidèle du suivi de valeur de React (« _valueTracker »).
+//
+//  React remplace le setter de .value sur l'élément. Quand du code écrit
+//  champ.value = "Jean", le suivi est mis à jour AVANT l'événement input ;
+//  React compare alors les deux, les trouve égaux, et considère qu'il ne
+//  s'est rien passé. L'état du composant reste vide.
+//
+//  Une frappe humaine, elle, ne passe pas par ce setter : le suivi garde
+//  l'ancienne valeur, la comparaison échoue, et l'état est mis à jour.
+// ---------------------------------------------------------------------------
+function controler(champ, surChangement) {
+    const descripteur = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+    let suivi = descripteur.get.call(champ);
+
+    Object.defineProperty(champ, "value", {
+        configurable: true,
+        get() { return descripteur.get.call(this); },
+        set(valeur) {
+            suivi = valeur;                       // ← le piège
+            descripteur.set.call(this, valeur);
+        }
+    });
+
+    champ.addEventListener("input", () => {
+        const affichee = descripteur.get.call(champ);
+
+        if (affichee === suivi) {
+            return;                               // le cadre ignore l'événement
+        }
+
+        suivi = affichee;
+        surChangement(affichee);
+    });
+}
+
+let etatDuCadre = "";
+
+controler(document.getElementById("prenom"), (valeur) => {
+    etatDuCadre = valeur;
+    const zone = document.getElementById("etatCadre");
+    zone.textContent = `état du cadre : ${valeur || "(vide)"}`;
+    zone.className = valeur ? "bandeau ok" : "bandeau";
+});
+
+async function scenario() {
+    const lignes = [];
+    const iframe = document.getElementById("cadre");
+
+    Banc.vider();
+    etatDuCadre = "";
+    document.getElementById("etatCadre").textContent = "état du cadre : (vide)";
+    document.getElementById("etatCadre").className = "bandeau";
+
+    // --- apprentissage ----------------------------------------------------
+    Banc.saisir("#prenom", "Jean");
+    Banc.saisir("#energie", "Essence");
+    Banc.saisir("#situation", "Marié(e)");
+    await Banc.attendre(800);
+
+    Banc.vider();
+    etatDuCadre = "";
+    document.getElementById("etatCadre").textContent = "état du cadre : (vide)";
+    document.getElementById("etatCadre").className = "bandeau";
+
+    const reponse = await Banc.remplir();
+
+    lignes.push({
+        quoi: "champ contrôlé — à l'écran",
+        attendu: "Jean",
+        obtenu: document.getElementById("prenom").value,
+        ok: document.getElementById("prenom").value === "Jean",
+        note: "l'affichage est correct"
+    });
+
+    lignes.push({
+        quoi: "champ contrôlé — état du cadre",
+        attendu: "Jean",
+        obtenu: etatDuCadre || "(vide)",
+        ok: etatDuCadre === "Jean",
+        note: "c'est CE QUE LE SERVEUR REÇOIT — défaut P-9"
+    });
+
+    const energie = document.getElementById("energie");
+
+    lignes.push({
+        quoi: "select : valeur réelle envoyée",
+        attendu: "7",
+        obtenu: energie.value || "(vide)",
+        ok: energie.value === "7",
+        note: "le texte affiché est « Essence », la valeur est « 7 »"
+    });
+
+    const situation = document.getElementById("situation");
+
+    lignes.push({
+        quoi: "select : libellé avec parenthèses",
+        attendu: "M",
+        obtenu: situation.value || "(vide)",
+        ok: situation.value === "M",
+        note: "« Marié(e) » — la normalisation laisse « marie e »"
+    });
+
+    // --- iframe -----------------------------------------------------------
+    const dansCadre = iframe.contentDocument.getElementById("prenom");
+
+    lignes.push({
+        quoi: "formulaire dans un iframe",
+        attendu: "Jean",
+        obtenu: dansCadre ? (dansCadre.value || "(vide)") : "(inaccessible)",
+        ok: Boolean(dansCadre && dansCadre.value === "Jean"),
+        note: "le manifeste ne déclare pas all_frames : le script n'y entre pas"
+    });
+
+    Banc.rapport(lignes);
+    Banc.journal(reponse.journal);
+}
+
+document.getElementById("lancer").addEventListener("click", () => scenario());
+addEventListener("load", () => scenario());
+</script>
+</body>
+</html>

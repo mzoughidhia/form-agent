@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entraînement 2 — formulaire piégé</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Formulaire piégé</h1>
+<p class="sous">entraînement 2 · ce que font les vieux extranets</p>
+
+<div class="mode">
+  <b>Aucun champ n'aide l'extension.</b> Pas de <code>name</code> parlant, pas de
+  <code>label for</code>, des libellés placés après le champ, une mise en page en tableau,
+  et deux pièges à faux positifs. Entraîne-la comme sur la page 1 : remplir à la main,
+  <code>F5</code>, puis <b>Remplir ce formulaire</b>.
+</div>
+
+<form onsubmit="event.preventDefault(); document.getElementById('merci').classList.add('visible');">
+
+  <fieldset><legend>Libellés mal attachés</legend>
+    <table class="grille">
+      <tr>
+        <td class="etiquette">Nom de famille</td>
+        <td><input type="text" name="f1"></td>
+      </tr>
+      <tr>
+        <td class="etiquette">Prénom</td>
+        <td><input type="text" name="f2"></td>
+      </tr>
+      <tr>
+        <td class="etiquette">Adresse e-mail</td>
+        <td><input type="text" name="f3"></td>
+      </tr>
+      <tr>
+        <td class="etiquette">N° de téléphone portable</td>
+        <td><input type="text" name="f4"></td>
+      </tr>
+    </table>
+    <p class="aide">Le libellé est dans la cellule d'à côté — ni <code>for</code>, ni parent commun.</p>
+  </fieldset>
+
+  <fieldset><legend>Libellé placé après le champ</legend>
+    <div class="champ">
+      <input type="text" name="f5">
+      <label>Adresse de résidence</label>
+    </div>
+    <div class="champ">
+      <input type="text" name="f6">
+      <label>Code postal</label>
+    </div>
+  </fieldset>
+
+  <fieldset><legend>Sans libellé du tout</legend>
+    <div class="champ">
+      <input type="text" name="f7" placeholder="Commune"></div>
+    <div class="champ">
+      <input type="text" name="f8" title="Date de naissance" placeholder="jj/mm/aaaa"></div>
+    <div class="champ">
+      <input type="text" name="f9" autocomplete="family-name">
+      <p class="aide">Celui-ci n'a que son <code>autocomplete</code> : signal standard, décisif.</p></div>
+  </fieldset>
+
+  <fieldset><legend>Les faux amis</legend>
+    <div class="champ"><label for="g1">Nom d'utilisateur</label>
+      <input type="text" id="g1" name="g1">
+      <p class="aide">Ce n'est <b>pas</b> le nom de famille. L'extension doit s'abstenir.</p></div>
+    <div class="champ"><label for="g2">Adresse IP de connexion</label>
+      <input type="text" id="g2" name="g2" value="82.64.11.7" readonly>
+      <p class="aide">Ce n'est <b>pas</b> une adresse postale.</p></div>
+    <div class="champ"><label for="g3">Nom du contact d'urgence</label>
+      <input type="text" id="g3" name="g3">
+      <p class="aide">Un « nom », mais pas le tien : à surveiller.</p></div>
+    <div class="champ"><label for="g4">Mot de passe</label>
+      <input type="password" id="g4" name="g4"></div>
+  </fieldset>
+
+  <div class="barre">
+    <button type="submit" class="principal">Envoyer</button>
+  </div>
+
+  <div class="merci" id="merci">Envoyé.</div>
+</form>
+
+<p class="aide" style="margin-top:16px"><a href="index.html">← retour au sommaire</a></p>
+
+</body>
+</html>

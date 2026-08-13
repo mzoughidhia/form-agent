@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entraînement 4 — page 2 sur 3</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Parcours en trois pages</h1>
+<p class="sous">entraînement 4 · page 2 sur 3</p>
+
+<div class="mode">
+  Même parcours, <b>autre URL</b> — donc autre empreinte. Les données de profil (nom,
+  e-mail, téléphone) suivent d'une page à l'autre ; les champs métier, eux, ne sont connus
+  que s'ils ont déjà été vus quelque part.
+</div>
+
+<form onsubmit="event.preventDefault(); location.href='4-page-3.html';">
+  <fieldset><legend>Étape 2 — où habitez-vous ?</legend>
+    <div class="champ"><label for="adresse">Adresse postale</label>
+      <input type="text" id="adresse" name="adresse"></div>
+    <div class="champ"><label for="complement">Complément d'adresse</label>
+      <input type="text" id="complement" name="complement"></div>
+    <div class="champ"><label for="cp">Code postal</label>
+      <input type="text" id="cp" name="code_postal" maxlength="5"></div>
+    <div class="champ"><label for="ville">Ville</label>
+      <input type="text" id="ville" name="ville"></div>
+    <div class="champ"><label for="statut">Vous êtes</label>
+      <select id="statut" name="statut_occupation">
+        <option value="">-- Choisir --</option>
+        <option value="PO">Propriétaire occupant</option>
+        <option value="LOC">Locataire</option>
+        <option value="HG">Hébergé à titre gratuit</option>
+      </select></div>
+    <div class="champ"><label for="depuis">Depuis quand ?</label>
+      <input type="text" id="depuis" name="date_emmenagement" placeholder="jj/mm/aaaa"></div>
+  </fieldset>
+
+  <div class="barre">
+    <a class="bouton" href="4-page-1.html">← Retour</a>
+    <button type="submit" class="principal">Continuer →</button>
+  </div>
+</form>
+
+<p class="aide" style="margin-top:16px">
+  Le bouton <b>Retour</b> est un simple lien : aucun formulaire n'est envoyé, donc rien
+  n'est figé. C'est un piège classique — la saisie de cette page n'est enregistrée que
+  grâce à l'enregistrement automatique, 600 ms après la dernière frappe.
+</p>
+
+</body>
+</html>

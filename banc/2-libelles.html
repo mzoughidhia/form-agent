@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc 2 — les façons d'écrire un libellé</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<div>
+  <h1>2 · Les façons d'écrire un libellé</h1>
+  <p class="sous">ce que les extranets font vraiment</p>
+
+  <form id="devis" onsubmit="return false">
+    <fieldset><legend>Sept façons de nommer un champ</legend>
+
+      <div class="champ"><label for="a">Prénom</label>
+        <input type="text" id="a" name="a1"></div>
+
+      <div class="champ"><label>Nom de famille
+        <input type="text" name="a2"></label></div>
+
+      <div class="champ">
+        <input type="text" name="a3" aria-label="Adresse e-mail"></div>
+
+      <div class="champ">
+        <span id="titre4">Téléphone</span>
+        <input type="text" name="a4" aria-labelledby="titre4"></div>
+
+      <div class="champ">
+        <input type="text" name="a5" placeholder="Code postal"></div>
+
+      <div class="champ">Ville
+        <input type="text" name="a6"></div>
+
+      <div class="champ">
+        <input type="text" name="date_de_naissance"></div>
+
+      <div class="champ">
+        <input type="text" id="z9"></div>
+
+    </fieldset>
+
+    <fieldset><legend>Civilité</legend>
+      <div class="champ enligne">
+        <label><input type="radio" name="c" value="1"> M.</label>
+        <label><input type="radio" name="c" value="2"> Mme</label>
+      </div>
+    </fieldset>
+  </form>
+</div>
+
+<div>
+  <h1>Verdict</h1>
+  <p class="sous">un champ sans aucun texte reste-t-il retrouvable ?</p>
+
+  <div class="carte">
+    <p class="note">
+      Chaque champ porte son libellé autrement : <code>label[for]</code>, label parent,
+      <code>aria-label</code>, <code>aria-labelledby</code>, <code>placeholder</code>, texte
+      voisin, <code>name</code> seul — et le dernier <b>n'a rien du tout</b> : ni libellé, ni
+      nom, ni voisin. C'est le cas limite : l'extension ne peut le retrouver que par sa
+      position.
+    </p>
+    <div class="actions">
+      <button class="fort" id="lancer">Relancer le scénario</button>
+      <span class="score" id="total">—</span>
+    </div>
+  </div>
+
+  <div class="carte">
+    <table>
+      <thead><tr><th></th><th>façon d'écrire le libellé</th><th>tapé</th><th>restitué</th><th>par quoi</th></tr></thead>
+      <tbody id="verdict"></tbody>
+    </table>
+  </div>
+
+  <div class="carte">
+    <h2>Journal du remplissage</h2>
+    <pre id="journal"></pre>
+  </div>
+</div>
+
+<script src="harnais.js"></script>
+<script src="../prototype/content.js"></script>
+<script>
+const SAISIE = [
+    ["#a",                        "Jean",              "label[for=…]",            "règle » prenom"],
+    ["[name=a2]",                 "DUPONT",            "label parent",            "règle » nom"],
+    ["[name=a3]",                 "jean@exemple.fr",   "aria-label",              "règle » email"],
+    ["[name=a4]",                 "0612345678",        "aria-labelledby",         "règle » telephone"],
+    ["[name=a5]",                 "69003",             "placeholder seul",        "règle » codePostal"],
+    ["[name=a6]",                 "Lyon",              "texte voisin",            "règle » ville"],
+    ["[name=date_de_naissance]",  "07/03/1985",        "name seul",               "règle » dateNaissance"],
+    ["#z9",                       "Sans libellé",      "rien du tout",            "position ::index(n)"],
+    ["input[name=c][value='1']",    true,                "radio + legend",          "groupe » civilité"]
+];
+
+async function scenario() {
+    Banc.vider();
+
+    SAISIE.forEach(([cible, valeur]) => Banc.saisir(cible, valeur));
+
+    await Banc.attendre(800);
+    Banc.vider();
+
+    const reponse = await Banc.remplir();
+
+    const attendus = SAISIE.map(([cible, valeur, quoi, note]) => ({
+        cible, quoi, note,
+        attendu: valeur === true ? "M." : valeur
+    }));
+
+    Banc.rapport(Banc.verifier(attendus));
+    Banc.journal(reponse.journal);
+}
+
+document.getElementById("lancer").addEventListener("click", scenario);
+scenario();
+</script>
+</body>
+</html>

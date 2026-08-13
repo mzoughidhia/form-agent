@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entraînement 3 — formulaire à étapes</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Formulaire à étapes</h1>
+<p class="sous">entraînement 3 · pagination interne, une seule URL</p>
+
+<div class="mode">
+  <b>Les quatre étapes sont dans la même page</b> — c'est le tunnel de devis classique.
+  Entraîne-la étape par étape : remplis, clique <b>Suivant</b>, remplis, etc., puis
+  <b>Envoyer</b>. Ensuite <code>F5</code> et, <b>sur chaque étape</b>, clique
+  <b>Remplir ce formulaire</b> : l'extension ne remplit que ce qui est à l'écran.
+</div>
+
+<form onsubmit="event.preventDefault(); document.getElementById('merci').classList.add('visible');">
+
+  <p class="jauge" id="jauge">Étape 1 sur 4 — le conducteur</p>
+
+  <div class="etape visible" data-etape="1">
+    <fieldset><legend>Le conducteur principal</legend>
+      <div class="champ"><label for="nom">Nom de famille</label>
+        <input type="text" id="nom" name="nom"></div>
+      <div class="champ"><label for="prenom">Prénom</label>
+        <input type="text" id="prenom" name="prenom"></div>
+      <div class="champ"><label for="naiss">Date de naissance</label>
+        <input type="text" id="naiss" name="date_naissance" placeholder="jj/mm/aaaa"></div>
+      <div class="champ"><label for="permis">Date d'obtention du permis</label>
+        <input type="text" id="permis" name="date_permis" placeholder="jj/mm/aaaa"></div>
+    </fieldset>
+  </div>
+
+  <div class="etape" data-etape="2">
+    <fieldset><legend>Le véhicule</legend>
+      <div class="champ"><label for="immat">Immatriculation</label>
+        <input type="text" id="immat" name="immatriculation" placeholder="AB-123-CD"></div>
+      <div class="champ"><label for="marque">Marque</label>
+        <input type="text" id="marque" name="marque"></div>
+      <div class="champ"><label for="modele">Modèle</label>
+        <input type="text" id="modele" name="modele"></div>
+      <div class="champ"><label for="energie">Énergie</label>
+        <select id="energie" name="energie">
+          <option value="">-- Choisir --</option>
+          <option value="7">Essence</option>
+          <option value="12">Diesel</option>
+          <option value="3">Électrique</option>
+        </select></div>
+      <div class="champ"><label for="mec">Date de première mise en circulation</label>
+        <input type="text" id="mec" name="mec" placeholder="jj/mm/aaaa"></div>
+    </fieldset>
+  </div>
+
+  <div class="etape" data-etape="3">
+    <fieldset><legend>Antécédents</legend>
+      <div class="champ"><label for="bonus">Coefficient bonus-malus</label>
+        <input type="text" id="bonus" name="bonus_malus" placeholder="0,85"></div>
+      <div class="champ"><label for="sinistres">Nombre de sinistres sur 36 mois</label>
+        <input type="number" id="sinistres" name="nb_sinistres" min="0"></div>
+      <div class="champ enligne">
+        <span>Avez-vous été résilié par un assureur ?</span><br>
+        <label><input type="radio" name="resilie" value="o"> Oui</label>
+        <label><input type="radio" name="resilie" value="n"> Non</label>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="etape" data-etape="4">
+    <fieldset><legend>Coordonnées et contrat</legend>
+      <div class="champ"><label for="mail">Adresse e-mail</label>
+        <input type="email" id="mail" name="email"></div>
+      <div class="champ"><label for="tel">Téléphone</label>
+        <input type="tel" id="tel" name="telephone"></div>
+      <div class="champ"><label for="effet">Date d'effet</label>
+        <input type="text" id="effet" name="date_effet" placeholder="jj/mm/aaaa"></div>
+      <div class="champ"><label for="frequence">Périodicité de paiement</label>
+        <select id="frequence" name="periodicite">
+          <option value="">-- Choisir --</option>
+          <option value="M">Mensuelle</option>
+          <option value="T">Trimestrielle</option>
+          <option value="A">Annuelle</option>
+        </select></div>
+    </fieldset>
+  </div>
+
+  <div class="barre">
+    <button type="button" id="precedent">Précédent</button>
+    <button type="button" id="suivant" class="principal">Suivant</button>
+    <button type="submit" id="envoyer" class="principal" style="display:none">Envoyer la demande</button>
+  </div>
+
+  <div class="merci" id="merci">Demande envoyée.</div>
+</form>
+
+<p class="aide" style="margin-top:16px"><a href="index.html">← retour au sommaire</a></p>
+
+<script>
+const TITRES = ["le conducteur", "le véhicule", "les antécédents", "le contrat"];
+let etape = 1;
+
+function montrer(numero) {
+    etape = Math.min(4, Math.max(1, numero));
+
+    document.querySelectorAll(".etape").forEach((bloc) => {
+        bloc.classList.toggle("visible", Number(bloc.dataset.etape) === etape);
+    });
+
+    document.getElementById("jauge").textContent =
+        `Étape ${etape} sur 4 — ${TITRES[etape - 1]}`;
+    document.getElementById("precedent").style.display = etape === 1 ? "none" : "";
+    document.getElementById("suivant").style.display = etape === 4 ? "none" : "";
+    document.getElementById("envoyer").style.display = etape === 4 ? "" : "none";
+}
+
+document.getElementById("suivant").addEventListener("click", () => montrer(etape + 1));
+document.getElementById("precedent").addEventListener("click", () => montrer(etape - 1));
+montrer(1);
+</script>
+</body>
+</html>

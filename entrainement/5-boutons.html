@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entraînement 5 — tous les types de boutons</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Tous les types de boutons</h1>
+<p class="sous">entraînement 5 · ce qui déclenche quoi</p>
+
+<div class="mode">
+  <b>L'extension ne clique jamais un bouton</b> — elle ne fait que remplir. Ce qui compte
+  ici, c'est ce que <b>ton</b> clic déclenche : figer la structure, faire apparaître des
+  champs, ou quitter la page en emportant la saisie.
+  <ol>
+    <li>Remplis les champs visibles.</li>
+    <li>Clique les boutons qui <b>révèlent</b> d'autres champs, remplis-les aussi.</li>
+    <li><code>F5</code>, puis popup → <b>Remplir ce formulaire</b>. Les champs cachés ne
+        reviendront qu'après avoir recliqué le bouton qui les révèle.</li>
+  </ol>
+</div>
+
+<form id="principal"
+      onsubmit="event.preventDefault(); marquer('submit du &lt;form&gt; — la structure est figée');">
+
+  <fieldset><legend>Le socle</legend>
+    <div class="champ"><label for="nom">Nom de famille</label>
+      <input type="text" id="nom" name="nom"></div>
+    <div class="champ"><label for="mail">Adresse e-mail</label>
+      <input type="email" id="mail" name="email"></div>
+  </fieldset>
+
+  <fieldset><legend>Champs révélés par un bouton</legend>
+    <div class="barre" style="margin:0 0 12px; padding:0; border:0">
+      <button type="button" id="ouvrirConjoint">+ Ajouter un conjoint</button>
+      <span role="button" tabindex="0" id="ouvrirEnfant" class="bouton">+ Ajouter un enfant</span>
+      <a href="#" id="ouvrirBanque" class="bouton">+ Coordonnées bancaires</a>
+    </div>
+
+    <div id="conjoint" style="display:none">
+      <div class="champ"><label for="conjointNom">Nom du conjoint</label>
+        <input type="text" id="conjointNom" name="conjoint_nom"></div>
+      <div class="champ"><label for="conjointNaiss">Date de naissance du conjoint</label>
+        <input type="text" id="conjointNaiss" name="conjoint_naissance" placeholder="jj/mm/aaaa"></div>
+    </div>
+
+    <div id="enfant" style="display:none">
+      <div class="champ"><label for="enfantNaiss">Date de naissance du 1er enfant</label>
+        <input type="text" id="enfantNaiss" name="enfant1_naissance" placeholder="jj/mm/aaaa"></div>
+    </div>
+
+    <div id="banque" style="display:none">
+      <div class="champ"><label for="iban">IBAN</label>
+        <input type="text" id="iban" name="iban" placeholder="FR76 ..."></div>
+      <div class="champ"><label for="titulaire">Titulaire du compte</label>
+        <input type="text" id="titulaire" name="titulaire"></div>
+    </div>
+
+    <p class="aide">
+      Trois façons de faire un bouton : un vrai <code>&lt;button&gt;</code>, un
+      <code>&lt;span role="button"&gt;</code>, un lien. Pour l'extension, seul compte le
+      fait que les champs soient <b>visibles</b> ou non.
+    </p>
+  </fieldset>
+
+  <fieldset><legend>Lignes répétées</legend>
+    <div id="conducteurs"></div>
+    <button type="button" id="ajouterConducteur">+ Ajouter un conducteur secondaire</button>
+    <p class="aide">Chaque ligne ajoutée porte un <code>name</code> différent
+      (<code>conducteur2</code>, <code>conducteur3</code>…) : autant de champs nouveaux
+      à apprendre.</p>
+  </fieldset>
+
+  <fieldset><legend>Les cinq façons d'envoyer</legend>
+    <div class="barre" style="margin:0; padding:0; border:0">
+      <button type="submit" class="principal">&lt;button type="submit"&gt;</button>
+      <input type="submit" value="input type=submit">
+      <button type="button" id="envoiJs">&lt;button type="button"&gt; + JS</button>
+      <a href="#" class="bouton" id="envoiLien">un lien qui envoie</a>
+      <input type="reset" value="input type=reset">
+    </div>
+    <p class="aide">
+      Les deux premiers déclenchent l'événement <code>submit</code> : l'extension fige la
+      structure. Le troisième et le quatrième ne le déclenchent pas — seul
+      l'enregistrement automatique (600 ms) sauve la saisie. Le <b>reset</b>, lui, vide
+      tout sans prévenir personne.
+    </p>
+  </fieldset>
+
+  <div class="merci" id="merci"></div>
+</form>
+
+<p class="aide" style="margin-top:16px"><a href="index.html">← retour au sommaire</a></p>
+
+<script>
+function marquer(texte) {
+    const zone = document.getElementById("merci");
+    zone.textContent = texte;
+    zone.classList.add("visible");
+}
+
+function basculer(identifiant, bouton) {
+    const bloc = document.getElementById(identifiant);
+    const ouvert = bloc.style.display !== "none";
+
+    bloc.style.display = ouvert ? "none" : "block";
+    bouton.textContent = bouton.textContent.replace(ouvert ? "−" : "+", ouvert ? "+" : "−");
+}
+
+document.getElementById("ouvrirConjoint").addEventListener("click", function () {
+    basculer("conjoint", this);
+});
+
+document.getElementById("ouvrirEnfant").addEventListener("click", function () {
+    basculer("enfant", this);
+});
+
+document.getElementById("ouvrirBanque").addEventListener("click", function (evenement) {
+    evenement.preventDefault();
+    basculer("banque", this);
+});
+
+let conducteurs = 1;
+
+document.getElementById("ajouterConducteur").addEventListener("click", () => {
+    conducteurs += 1;
+
+    const bloc = document.createElement("div");
+    bloc.className = "champ";
+    bloc.innerHTML =
+        `<label for="cond${conducteurs}">Nom du conducteur ${conducteurs}</label>` +
+        `<input type="text" id="cond${conducteurs}" name="conducteur${conducteurs}">`;
+
+    document.getElementById("conducteurs").append(bloc);
+});
+
+// Un envoi « moderne » : aucun événement submit n'est émis.
+document.getElementById("envoiJs").addEventListener("click", () => {
+    marquer("envoi par JavaScript — AUCUN événement submit : rien n'est figé");
+});
+
+document.getElementById("envoiLien").addEventListener("click", (evenement) => {
+    evenement.preventDefault();
+    marquer("envoi par lien — AUCUN événement submit non plus");
+});
+</script>
+</body>
+</html>

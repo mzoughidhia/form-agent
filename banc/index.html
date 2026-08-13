@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc d'essai — Form Agent Test</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<div>
+  <h1>Banc d'essai</h1>
+  <p class="sous">extension « Form Agent Test »</p>
+
+  <div class="carte">
+    <nav>
+      <a href="1-champs.html">1 · Tous les types de champs
+        <span>texte, date, e-mail, téléphone, select, radio, case, mot de passe, désactivé, lecture seule</span></a>
+      <a href="2-libelles.html">2 · Les façons d'écrire un libellé
+        <span>label[for], label parent, aria-label, aria-labelledby, placeholder, texte voisin, name seul, rien</span></a>
+      <a href="3-etapes.html">3 · Formulaire à étapes
+        <span>trois écrans, une seule URL — pagination interne</span></a>
+      <a href="4-chargement.html">4 · Chargement différé
+        <span>champs injectés après coup, navigation par history.pushState</span></a>
+      <a href="5-cadre.html">5 · Cadre applicatif, select, iframe
+        <span>champ contrôlé façon React, valeur réelle d'un select, sous-document</span></a>
+    </nav>
+  </div>
+</div>
+
+<div>
+  <h1>Comment ça marche</h1>
+  <p class="sous">sans installer l'extension</p>
+
+  <div class="carte">
+    <p class="note">
+      Chaque page charge le <b>vrai</b> <code>prototype/content.js</code>. Le harnais lui
+      fournit un faux <code>chrome</code> — <code>storage.local</code> en mémoire,
+      <code>runtime.onMessage</code> capté — et joue le cycle réel de l'extension :
+    </p>
+    <pre class="journal">saisir  →  attendre l'enregistrement  →  vider  →  remplir  →  comparer</pre>
+    <p class="note" style="margin-top:12px">
+      La saisie passe par le <b>setter natif du prototype</b>, comme une frappe humaine.
+      C'est essentiel : une affectation directe tromperait les cadres applicatifs et le
+      banc conclurait en faveur de l'extension à tort.
+    </p>
+  </div>
+
+  <div class="carte">
+    <h2>Ce que le banc ne peut pas dire</h2>
+    <p class="note">
+      Il ne remplace pas un vrai extranet : pas d'authentification, pas de champs
+      conditionnels pilotés par le serveur, pas de captcha, pas de Shadow DOM. Il éprouve
+      le <b>moteur</b>, pas la compagnie.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

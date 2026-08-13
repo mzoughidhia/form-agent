@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entraînement 4 — page 1 sur 3</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Parcours en trois pages</h1>
+<p class="sous">entraînement 4 · page 1 sur 3 · vraie pagination</p>
+
+<div class="mode">
+  <b>Ici, chaque étape est une URL différente</b> — la page est rechargée à chaque fois.
+  L'extension garde une empreinte <b>par page</b>. Entraîne les trois pages l'une après
+  l'autre, puis reviens sur chacune et clique <b>Remplir ce formulaire</b>.
+</div>
+
+<form onsubmit="event.preventDefault(); location.href='4-page-2.html';">
+  <fieldset><legend>Étape 1 — qui êtes-vous ?</legend>
+    <div class="champ enligne">
+      <label><input type="radio" name="civilite" value="1"> Monsieur</label>
+      <label><input type="radio" name="civilite" value="2"> Madame</label>
+    </div>
+    <div class="champ"><label for="nom">Nom de famille</label>
+      <input type="text" id="nom" name="nom"></div>
+    <div class="champ"><label for="prenom">Prénom</label>
+      <input type="text" id="prenom" name="prenom"></div>
+    <div class="champ"><label for="naiss">Date de naissance</label>
+      <input type="text" id="naiss" name="date_naissance" placeholder="jj/mm/aaaa"></div>
+    <div class="champ"><label for="profession">Profession</label>
+      <input type="text" id="profession" name="profession"></div>
+  </fieldset>
+
+  <div class="barre">
+    <button type="submit" class="principal">Continuer →</button>
+    <a class="bouton" href="index.html">Abandonner</a>
+  </div>
+</form>
+
+<p class="aide" style="margin-top:16px">
+  Le bouton <b>Continuer</b> envoie le formulaire puis change de page : c'est le moment où
+  l'extension fige la structure.
+</p>
+
+</body>
+</html>
