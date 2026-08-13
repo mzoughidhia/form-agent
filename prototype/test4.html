@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test 4 — capture et restitution</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 560px; margin: 30px auto; }
+        p { margin: 0 0 16px; }
+        label { font-size: 13px; color: #555; }
+        input[type=text], select, textarea { width: 100%; box-sizing: border-box; padding: 6px; }
+        fieldset { border: 1px solid #ccc; margin: 0 0 16px; }
+        legend { font-size: 13px; color: #555; }
+        .case { display: block; margin-bottom: 8px; font-size: 13px; color: #222; }
+        .note { background: #fffbe6; padding: 10px; font-size: 13px; }
+    </style>
+</head>
+
+<body>
+
+<h1>Demande d'intervention</h1>
+
+<p class="note">
+    Aucune règle du code ne connaît « Matricule », « Numéro de dossier »,
+    « Service » ni « Motif ». Remplis-les à la main, clique sur
+    <b>Capturer</b>, recharge la page (F5), puis <b>Remplir</b>.
+</p>
+
+<form onsubmit="return false">
+
+    <fieldset>
+        <legend>Civilité</legend>
+        <label class="case"><input type="radio" name="civ" value="1"> Monsieur</label>
+        <label class="case"><input type="radio" name="civ" value="2"> Madame</label>
+    </fieldset>
+
+    <p>
+        <label for="a1">Nom de famille</label>
+        <input type="text" id="a1" name="a1">
+    </p>
+
+    <p>
+        <label for="a2">Prénom</label>
+        <input type="text" id="a2" name="a2">
+    </p>
+
+    <p>
+        <!-- inconnu du code -->
+        <label for="a3">Matricule</label>
+        <input type="text" id="a3" name="a3">
+    </p>
+
+    <p>
+        <!-- inconnu du code -->
+        <label for="a4">Numéro de dossier</label>
+        <input type="text" id="a4" name="a4">
+    </p>
+
+    <p>
+        <!-- inconnu du code, en liste déroulante -->
+        <label for="a5">Service concerné</label>
+        <select id="a5" name="a5">
+            <option value="">-- Choisir --</option>
+            <option value="rh">Ressources humaines</option>
+            <option value="it">Informatique</option>
+            <option value="fi">Finances</option>
+        </select>
+    </p>
+
+    <p>
+        <label for="a6">Adresse e-mail</label>
+        <input type="text" id="a6" name="a6">
+    </p>
+
+    <p>
+        <!-- inconnu du code, zone de texte -->
+        <label for="a7">Motif de la demande</label>
+        <textarea id="a7" name="a7" rows="3"></textarea>
+    </p>
+
+    <p>
+        <label class="case">
+            <input type="checkbox" name="a8">
+            Demande urgente
+        </label>
+
+        <label class="case">
+            <!-- ne doit jamais être mémorisée ni cochée -->
+            <input type="checkbox" name="a9">
+            Je certifie l'exactitude des informations fournies
+        </label>
+    </p>
+
+    <button type="submit">Envoyer</button>
+
+</form>
+
+</body>
+</html>

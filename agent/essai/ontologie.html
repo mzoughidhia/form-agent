@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Essai — l'ontologie canonique</title>
+<style>
+  :root {
+    --paper:#f6f7fa; --surface:#fff; --surface-2:#eff2f7;
+    --ink:#131821; --soft:#4c5567; --pale:#7b8496; --rule:#dce1ea;
+    --accent:#2b45cc; --ok:#16744a; --ok-bg:#e2f2ea;
+    --warn:#8a5a00; --warn-bg:#f8eeda;
+    --ko:#a11d1d; --ko-bg:#faeaea;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55;
+    margin: 0; padding: 20px; background: var(--paper); color: var(--ink);
+    display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 980px) { body { grid-template-columns: 1fr; } }
+
+  h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: -0.01em; }
+  h2 { font-size: 14px; margin: 0 0 8px; }
+  .sous { font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+          text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+
+  .carte { background: var(--surface); border: 1px solid var(--rule);
+           border-radius: 3px; padding: 14px 16px; margin-bottom: 14px; }
+
+  .note { font-size: 12.5px; color: var(--soft); margin: 0 0 12px; }
+  .note b { color: var(--ink); }
+  code { font-family: var(--mono); font-size: 12px; }
+
+  input[type=text] { padding: 6px 8px; font: inherit; font-size: 13px; width: 100%;
+                     border: 1px solid var(--rule); border-radius: 3px; }
+  input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  button { font: inherit; font-size: 12.5px; padding: 5px 10px; cursor: pointer;
+           border: 1px solid var(--rule); border-radius: 3px; background: var(--surface); }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.fort { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.fort:hover { color: #fff; opacity: .9; }
+  button.suggestion { font-family: var(--mono); font-size: 11.5px; padding: 3px 7px; }
+  .boutons { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .boutons.colonne { flex-direction: column; align-items: stretch; }
+  .boutons.colonne button { text-align: left; }
+
+  .fleche { font-family: var(--mono); font-size: 11px; color: var(--pale);
+            letter-spacing: .06em; text-transform: uppercase; margin: 10px 0 3px; }
+  .normalise { font-family: var(--mono); font-size: 13px; color: var(--soft); }
+
+  .resultat { border-left: 3px solid var(--rule); background: var(--surface-2);
+              padding: 8px 10px; font-size: 12.5px; }
+  .resultat.trouve { border-left-color: var(--ok); background: var(--ok-bg); }
+  .resultat.inconnu { border-left-color: var(--warn); background: var(--warn-bg); }
+  .resultat.vide { color: var(--pale); }
+  .cle-trouvee { font-family: var(--mono); font-size: 14px; font-weight: 600;
+                 color: var(--accent); margin-bottom: 2px; }
+  .resultat .pale { color: var(--soft); font-family: var(--mono); font-size: 11.5px; }
+
+  .mesures { display: flex; gap: 22px; align-items: baseline; margin-bottom: 12px; }
+  .mesure .val { font-family: var(--mono); font-size: 20px; font-weight: 600; display: block; }
+  .mesure .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+                 text-transform: uppercase; color: var(--pale); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--surface-2);
+           vertical-align: top; }
+  th { font-family: var(--mono); font-size: 10px; letter-spacing: .07em; text-transform: uppercase;
+       color: var(--pale); font-weight: 500; background: var(--surface-2); white-space: nowrap; }
+  td.mono { font-family: var(--mono); font-size: 11.5px; }
+  td.petit { font-size: 10.5px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--pale); }
+  td.pale { color: var(--pale); }
+  td.cle { color: var(--accent); white-space: nowrap; }
+  td.section { font-weight: 600; background: var(--surface-2); font-size: 11px;
+               letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
+
+  #anomalies { font-family: var(--mono); font-size: 11.5px; max-height: 260px; overflow-y: auto; }
+  .ligne { padding: 4px 8px; border-left: 3px solid var(--rule); margin-bottom: 3px;
+           background: var(--surface-2); white-space: pre-wrap; }
+  .ligne.ok { border-left-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+  .ligne.attention { border-left-color: var(--warn); background: var(--warn-bg); color: var(--warn); }
+  .ligne.anomalie { border-left-color: var(--ko); background: var(--ko-bg); color: var(--ko); }
+</style>
+</head>
+<body>
+
+<div>
+  <h1>L'ontologie canonique</h1>
+  <p class="sous">ontology.json v<span id="version">—</span> · le vrai fichier</p>
+
+  <div class="carte">
+    <h2>1 · Le dictionnaire de libellés</h2>
+    <p class="note">
+      Un extranet affiche un libellé. Il est <b>normalisé</b> — accents, ponctuation et casse
+      écrasés — puis cherché dans l'ontologie. C'est ce qui fait que la 40<sup>e</sup> compagnie
+      s'apprend plus vite que la 1<sup>re</sup>.
+    </p>
+
+    <div class="boutons" id="suggestions"></div>
+
+    <input type="text" id="libelle" placeholder="Un libellé lu sur un extranet…"
+           autocomplete="off" spellcheck="false">
+
+    <div class="fleche">clé normalisée</div>
+    <div class="normalise" id="normalise">—</div>
+
+    <div class="fleche">champ canonique</div>
+    <div class="resultat vide" id="resultat"></div>
+  </div>
+
+  <div class="carte">
+    <h2>3 · Le validateur</h2>
+    <p class="note">
+      Chaque bouton part du <b>vrai</b> fichier et n'y casse <b>qu'une seule chose</b> — ce qui
+      arrivera le jour où quelqu'un l'édite à la main. Le validateur tourne à chaque
+      <code>npm run verifier</code>&nbsp;: une anomalie, et le build échoue.
+    </p>
+
+    <div class="boutons colonne" id="demonstrations"></div>
+
+    <p class="note" id="explication"></p>
+
+    <div id="anomalies"></div>
+  </div>
+</div>
+
+<div>
+  <h1>2 · Ce qu'un courtier relit</h1>
+  <p class="sous">ticket S1-3</p>
+
+  <div class="carte">
+    <div class="mesures">
+      <div class="mesure"><span class="val" id="compteur">—</span><span class="lbl">champs affichés</span></div>
+      <div class="mesure"><span class="val" id="total">—</span><span class="lbl">au total</span></div>
+      <div class="mesure"><span class="val" id="libelles">—</span><span class="lbl">libellés reconnus</span></div>
+    </div>
+
+    <input type="text" id="filtre" placeholder="Filtrer : permis, siret, franchise, naissance…"
+           autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="carte">
+    <table>
+      <thead><tr>
+        <th>clé canonique</th><th>libellé</th><th>syn.</th><th>type</th>
+        <th>écritures acceptées · valeurs · formule</th>
+      </tr></thead>
+      <tbody id="corps"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="ontologie.js"></script>
+</body>
+</html>

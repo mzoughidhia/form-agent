@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc H — sans balise form, champs conditionnels</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<p class="cas">Cas H · pas de &lt;form&gt; · champs conditionnels</p>
+<h1>Devis Professionnel</h1>
+
+<div class="attendu">
+  Deux difficultés à la fois. Il n'y a <b>aucune balise <code>&lt;form&gt;</code></b> — les champs
+  flottent dans la page et un bouton envoie en AJAX, comme beaucoup d'extranets modernes.
+  Et trois champs <b>n'apparaissent qu'après un choix</b>.<br>
+  Attendu : le formulaire est quand même relevé, et après avoir choisi
+  « Avec local commercial », <b>Q5 = 3 champs</b>.
+</div>
+
+<fieldset><legend>Activité</legend>
+  <div class="champ"><label for="denomination">Dénomination</label>
+    <input type="text" id="denomination" name="denomination" required></div>
+  <div class="champ"><label for="codeNaf">Code NAF</label>
+    <input type="text" id="codeNaf" name="code_naf" maxlength="5"></div>
+  <div class="champ"><label for="ca">Chiffre d'affaires annuel</label>
+    <input type="text" id="ca" name="chiffre_affaires" placeholder="150 000 €"></div>
+  <div class="champ"><label for="effectif">Effectif salarié</label>
+    <input type="number" id="effectif" name="effectif" min="0"></div>
+</fieldset>
+
+<fieldset><legend>Locaux</legend>
+  <div class="champ"><label for="local">Situation des locaux</label>
+    <select id="local" name="situation_locaux">
+      <option value="">-- Choisir --</option>
+      <option value="D">À domicile</option>
+      <option value="C">Avec local commercial</option>
+    </select></div>
+
+  <!-- Ces trois champs sont insérés par le script, pas présents au départ. -->
+  <div id="bloc-local"></div>
+</fieldset>
+
+<p><button type="button" id="envoyer">Envoyer la demande</button></p>
+<p id="fin" style="display:none;color:#16744a;font-weight:600">Demande envoyée.</p>
+
+<a class="retour" href="index.html">← Retour au banc d'essai</a>
+
+<script>
+  document.getElementById("local").addEventListener("change", (evenement) => {
+    const bloc = document.getElementById("bloc-local");
+
+    bloc.innerHTML = evenement.target.value === "C"
+      ? `<div class="champ"><label for="surface">Surface du local</label>
+           <input type="text" id="surface" name="surface_local" placeholder="80 m²"></div>
+         <div class="champ"><label for="loyer">Loyer mensuel</label>
+           <input type="text" id="loyer" name="loyer_mensuel"></div>
+         <div class="champ"><div class="txt">Alarme reliée à un centre de télésurveillance</div>
+           <label><input type="radio" name="alarme" value="O"> Oui</label>
+           <label><input type="radio" name="alarme" value="N"> Non</label></div>`
+      : "";
+  });
+
+  document.getElementById("envoyer").addEventListener("click", () => {
+    document.getElementById("fin").style.display = "block";
+  });
+</script>
+
+</body>
+</html>

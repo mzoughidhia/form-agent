@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node 24 exécute TypeScript nativement : pas de transpilation
+          # avant de lancer les tests.
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: agent/package-lock.json
+
+      - run: npm ci
+
+      # Le sens des dépendances et la règle « ne jamais soumettre ».
+      # En premier : c'est le moins cher et le plus structurant.
+      - name: Architecture
+        run: npm run architecture
+
+      - name: Typage
+        run: npm run types
+
+      - name: Tests
+        run: npm test

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test 3 — listes, radios, cases</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 560px; margin: 30px auto; }
+        p { margin: 0 0 16px; }
+        label { font-size: 13px; color: #555; }
+        input[type=text], select { width: 100%; box-sizing: border-box; padding: 6px; }
+        fieldset { border: 1px solid #ccc; margin: 0 0 16px; }
+        legend { font-size: 13px; color: #555; }
+        .case { display: block; margin-bottom: 8px; font-size: 13px; color: #222; }
+        .note { background: #fffbe6; padding: 10px; font-size: 13px; }
+    </style>
+</head>
+
+<body>
+
+<h1>Listes déroulantes, radios et cases</h1>
+
+<p class="note">
+    Les valeurs du profil ne sont jamais écrites telles quelles ici :
+    l'agent doit retrouver l'option ou le bouton correspondant.
+</p>
+
+<form onsubmit="return false">
+
+    <fieldset>
+        <legend>Civilité</legend>
+
+        <label class="case">
+            <input type="radio" name="g1" value="1"> Monsieur
+        </label>
+
+        <label class="case">
+            <input type="radio" name="g1" value="2"> Madame
+        </label>
+    </fieldset>
+
+    <p>
+        <!-- même donnée, en liste déroulante, avec une invite en tête -->
+        <label for="s1">Titre</label>
+        <select id="s1" name="s1">
+            <option value="">-- Choisir --</option>
+            <option value="MR">Monsieur</option>
+            <option value="MRS">Madame</option>
+        </select>
+    </p>
+
+    <p>
+        <label for="t1">Nom de famille</label>
+        <input type="text" id="t1" name="t1">
+    </p>
+
+    <p>
+        <label for="s2">Pays de résidence</label>
+        <select id="s2" name="s2">
+            <option value="">-- Choisir --</option>
+            <option value="dz">Algérie</option>
+            <option value="fr">France</option>
+            <option value="ma">Maroc</option>
+            <option value="tn">Tunisie</option>
+        </select>
+    </p>
+
+    <p>
+        <!-- liste dont les libellés sont en majuscules -->
+        <label for="s3">Ville</label>
+        <select id="s3" name="s3">
+            <option value="">-- Choisir --</option>
+            <option value="1">TUNIS</option>
+            <option value="2">SFAX</option>
+            <option value="3">MOUROUJ</option>
+        </select>
+    </p>
+
+    <p>
+        <label class="case">
+            <input type="checkbox" name="c1">
+            Je souhaite recevoir la newsletter
+        </label>
+
+        <label class="case">
+            <!-- ne doit JAMAIS être cochée automatiquement -->
+            <input type="checkbox" name="c2">
+            J'accepte les conditions générales d'utilisation
+        </label>
+
+        <label class="case">
+            <!-- ne doit JAMAIS être cochée automatiquement -->
+            <input type="checkbox" name="c3">
+            Je certifie l'exactitude des informations fournies
+        </label>
+    </p>
+
+    <button type="submit">Envoyer</button>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Emprunteur — saisie</title>
+<link rel="stylesheet" href="banc.css">
+<style>body { margin: 12px auto; }</style>
+</head>
+<body>
+
+<form id="emprunteur">
+  <fieldset><legend>Emprunt</legend>
+    <div class="champ"><label for="montant">Montant emprunté</label>
+      <input type="text" id="montant" name="montant_emprunte" placeholder="200 000 €" required></div>
+    <div class="champ"><label for="duree">Durée du prêt (années)</label>
+      <input type="number" id="duree" name="duree_pret" min="1" max="30"></div>
+    <div class="champ"><label for="taux">Taux du prêt</label>
+      <input type="text" id="taux" name="taux_pret" placeholder="3,20 %"></div>
+  </fieldset>
+
+  <fieldset><legend>Emprunteur</legend>
+    <div class="champ"><label for="profession">Profession</label>
+      <input type="text" id="profession" name="profession"></div>
+    <div class="champ"><div class="txt">Fumeur</div>
+      <label><input type="radio" name="fumeur" value="O"> Oui</label>
+      <label><input type="radio" name="fumeur" value="N"> Non</label></div>
+    <div class="champ"><label for="quotite">Quotité assurée</label>
+      <select id="quotite" name="quotite">
+        <option value="">-- Choisir --</option>
+        <option value="50">50 %</option>
+        <option value="100">100 %</option>
+      </select></div>
+  </fieldset>
+
+  <button type="submit">Valider</button>
+</form>
+
+<script>
+  document.getElementById("emprunteur")
+    .addEventListener("submit", (evenement) => evenement.preventDefault());
+</script>
+
+</body>
+</html>

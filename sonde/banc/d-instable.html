@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc D — identifiants regénérés</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<p class="cas">Cas D · sélecteurs instables</p>
+<h1>Devis Flotte — portail ancien</h1>
+
+<div class="attendu">
+  Les <code>id</code> et les <code>name</code> sont <b>regénérés à chaque chargement</b>,
+  comme sur certains portails ASP.NET. Les libellés, eux, ne bougent pas.<br>
+  Attendu après <b>deux chargements</b> (F5) : <b>Q3 = ide 0% · nom 0% · lib 100%</b>,
+  et le verdict passe à <b>difficile — libellés seuls</b>.
+</div>
+
+<p style="font-size:13px;color:#555">
+  Identifiants de ce chargement : <code id="graine">…</code> — appuie sur <b>F5</b> et
+  regarde-les changer.
+</p>
+
+<form id="flotte">
+  <fieldset><legend>Entreprise</legend>
+    <div class="champ"><label class="l" data-pour="raison">Raison sociale</label>
+      <input type="text" class="f" data-cle="raison" required></div>
+    <div class="champ"><label class="l" data-pour="siret">Numéro SIRET</label>
+      <input type="text" class="f" data-cle="siret" maxlength="14"></div>
+    <div class="champ"><label class="l" data-pour="activite">Activité principale</label>
+      <input type="text" class="f" data-cle="activite"></div>
+  </fieldset>
+
+  <fieldset><legend>Flotte</legend>
+    <div class="champ"><label class="l" data-pour="nbvehicules">Nombre de véhicules</label>
+      <input type="number" class="f" data-cle="nbvehicules" min="1"></div>
+    <div class="champ"><label class="l" data-pour="usage">Usage principal</label>
+      <select class="f" data-cle="usage">
+        <option value="">-- Choisir --</option>
+        <option value="M">Marchandises</option>
+        <option value="P">Transport de personnes</option>
+        <option value="S">Service</option>
+      </select></div>
+    <div class="champ"><div class="txt">Véhicules frigorifiques</div>
+      <label><input type="radio" class="r" data-cle="frigo" value="O"> Oui</label>
+      <label><input type="radio" class="r" data-cle="frigo" value="N"> Non</label></div>
+  </fieldset>
+
+  <button type="submit">Valider</button>
+</form>
+
+<a class="retour" href="index.html">← Retour au banc d'essai</a>
+
+<script>
+  // Une graine différente à chaque chargement : c'est ce qui simule un
+  // portail qui regénère ses identifiants à chaque session.
+  const graine = Math.random().toString(36).slice(2, 8);
+  document.getElementById("graine").textContent = "ctl00_" + graine + "_…";
+
+  document.querySelectorAll(".f").forEach((champ, position) => {
+    const cle = champ.dataset.cle;
+    const identifiant = `ctl00_${graine}_${cle}_${position}`;
+
+    champ.id = identifiant;
+    champ.name = `${cle}$${graine}`;
+
+    const etiquette = document.querySelector(`.l[data-pour="${cle}"]`);
+    if (etiquette) {
+      etiquette.setAttribute("for", identifiant);
+    }
+  });
+
+  // Le groupe radio partage un même name, lui aussi regénéré.
+  document.querySelectorAll(".r").forEach((bouton, position) => {
+    bouton.id = `ctl00_${graine}_frigo_${position}`;
+    bouton.name = `frigo$${graine}`;
+  });
+
+  document.getElementById("flotte")
+    .addEventListener("submit", (evenement) => evenement.preventDefault());
+</script>
+
+</body>
+</html>

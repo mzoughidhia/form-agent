@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc B — route interne (SPA)</title>
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<p class="cas">Cas B · pagination par route interne</p>
+<h1>Devis Habitation</h1>
+
+<div class="attendu">
+  L'URL change à chaque étape, <b>sans jamais recharger la page</b> — comme une
+  application Angular ou React. Attendu : <b>Q2 = route interne (SPA)</b> et
+  <b>Q1 = 3 formulaires</b>.
+</div>
+
+<nav class="fil" id="fil"></nav>
+
+<div id="ecran"></div>
+
+<p>
+  <button type="button" id="precedent">Précédent</button>
+  <button type="button" id="suivant">Suivant</button>
+</p>
+
+<a class="retour" href="index.html">← Retour au banc d'essai</a>
+
+<script>
+  const ETAPES = [
+    {
+      nom: "Logement",
+      html: `
+        <fieldset><legend>Le logement</legend>
+          <div class="champ"><label for="adresse">Adresse du logement</label>
+            <input type="text" id="adresse" name="adresse_logement" required></div>
+          <div class="champ"><label for="cp">Code postal</label>
+            <input type="text" id="cp" name="code_postal" maxlength="5" required></div>
+          <div class="champ"><label for="type">Type de bien</label>
+            <select id="type" name="type_bien">
+              <option value="">-- Choisir --</option>
+              <option value="A">Appartement</option>
+              <option value="M">Maison</option>
+            </select></div>
+        </fieldset>`
+    },
+    {
+      nom: "Occupant",
+      html: `
+        <fieldset><legend>L'occupant</legend>
+          <div class="champ"><label for="qualite">Qualité de l'occupant</label>
+            <select id="qualite" name="qualite_occupant">
+              <option value="">-- Choisir --</option>
+              <option value="P">Propriétaire</option>
+              <option value="L">Locataire</option>
+            </select></div>
+          <div class="champ"><div class="txt">Résidence principale</div>
+            <label><input type="radio" name="residence" value="O"> Oui</label>
+            <label><input type="radio" name="residence" value="N"> Non</label></div>
+          <div class="champ"><label for="pieces">Nombre de pièces</label>
+            <input type="number" id="pieces" name="nb_pieces" min="1" max="20"></div>
+        </fieldset>`
+    },
+    {
+      nom: "Garanties",
+      html: `
+        <fieldset><legend>Garanties souhaitées</legend>
+          <div class="champ"><label for="capital">Capital mobilier</label>
+            <input type="text" id="capital" name="capital_mobilier" placeholder="15 000 €"></div>
+          <div class="champ"><label for="franchise">Franchise</label>
+            <select id="franchise" name="franchise">
+              <option value="">-- Choisir --</option>
+              <option value="150">150 €</option>
+              <option value="300">300 €</option>
+            </select></div>
+          <div class="champ"><label for="commentaire">Commentaire libre</label>
+            <textarea id="commentaire" name="commentaire" rows="3"></textarea></div>
+        </fieldset>`
+    }
+  ];
+
+  let index = 0;
+
+  function afficher() {
+    document.getElementById("ecran").innerHTML = ETAPES[index].html;
+    document.getElementById("fil").innerHTML =
+      ETAPES.map((etape, i) =>
+        i === index ? `<b>${i + 1}. ${etape.nom}</b>` : `${i + 1}. ${etape.nom}`
+      ).join(" &rsaquo; ");
+
+    // Le cœur du cas B : on change l'URL sans recharger.
+    history.pushState({ index }, "", `?etape=${index + 1}`);
+  }
+
+  document.getElementById("suivant").addEventListener("click", () => {
+    if (index < ETAPES.length - 1) { index += 1; afficher(); }
+  });
+
+  document.getElementById("precedent").addEventListener("click", () => {
+    if (index > 0) { index -= 1; afficher(); }
+  });
+
+  afficher();
+</script>
+
+</body>
+</html>

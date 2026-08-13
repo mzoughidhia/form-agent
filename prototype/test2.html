@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test 2 — détection automatique</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 520px; margin: 30px auto; }
+        p { margin: 0 0 14px; }
+        label { display: block; font-size: 13px; color: #555; }
+        input { width: 100%; box-sizing: border-box; padding: 6px; }
+        .note { background: #fffbe6; padding: 10px; font-size: 13px; }
+    </style>
+</head>
+
+<body>
+
+<h1>Formulaire piégé</h1>
+
+<p class="note">
+    Aucun champ ne porte un <code>name</code> parlant : ils s'appellent
+    <code>f1</code>, <code>f2</code>… L'agent ne peut réussir qu'en lisant
+    les libellés.
+</p>
+
+<form onsubmit="return false">
+
+    <p>
+        <label for="f1">Nom de famille</label>
+        <input type="text" id="f1" name="f1">
+    </p>
+
+    <p>
+        <label for="f2">Prénom</label>
+        <input type="text" id="f2" name="f2">
+    </p>
+
+    <p>
+        <!-- piège : "adresse" ici désigne l'e-mail, pas le domicile -->
+        <label for="f3">Adresse e-mail</label>
+        <input type="text" id="f3" name="f3">
+    </p>
+
+    <p>
+        <label for="f4">N° de téléphone portable</label>
+        <input type="text" id="f4" name="f4">
+    </p>
+
+    <p>
+        <label for="f5">Adresse de résidence</label>
+        <input type="text" id="f5" name="f5">
+    </p>
+
+    <p>
+        <label for="f6">Code postal</label>
+        <input type="text" id="f6" name="f6">
+    </p>
+
+    <p>
+        <!-- libellé non associé : rattrapé par le texte voisin -->
+        Commune <input type="text" name="f7">
+    </p>
+
+    <p>
+        <label for="f8">Date de naissance</label>
+        <input type="date" id="f8" name="f8">
+    </p>
+
+    <p>
+        <!-- attribut standard, sans aucun libellé -->
+        <input type="text" name="f9" autocomplete="given-name"
+               placeholder="(autocomplete uniquement)">
+    </p>
+
+    <p>
+        <!-- ne doit PAS être rempli -->
+        <label for="f10">Nom d'utilisateur</label>
+        <input type="text" id="f10" name="f10">
+    </p>
+
+    <p>
+        <!-- ne doit PAS être rempli -->
+        <label for="f11">Mot de passe</label>
+        <input type="password" id="f11" name="f11">
+    </p>
+
+    <button type="submit">Envoyer</button>
+
+</form>
+
+</body>
+</html>

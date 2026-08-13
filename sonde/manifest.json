@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Sonde — reconnaissance de formulaires",
+  "version": "0.3.0",
+  "description": "Observe la structure des formulaires des extranets. N'écrit rien, ne remplit rien, ne clique nulle part.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*",
+    "file:///*"
+  ],
+  "action": {
+    "default_popup": "panneau.html",
+    "default_title": "Sonde — reconnaissance de formulaires"
+  },
+  "background": {
+    "service_worker": "fond.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*",
+        "http://*/*",
+        "file:///*"
+      ],
+      "js": ["commun.js", "sonde.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Banc d'essai — sonde de reconnaissance</title>
+<link rel="stylesheet" href="banc.css">
+<style>
+  .mode { border:1px solid #dce1ea; border-left:3px solid #2b45cc; background:#f6f7fa;
+          border-radius:3px; padding:12px 16px; font-size:14px; margin-bottom:22px; }
+  .mode ol { margin:8px 0 0; padding-left:20px; }
+  .mode li { margin-bottom:4px; }
+  td.cas { font-family: ui-monospace, Consolas, monospace; font-size:12px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<p class="cas">Sprint −1 · banc d'essai local</p>
+<h1>Éprouver la sonde sur tous les cas</h1>
+
+<p>
+  Sept formulaires qui reproduisent chacun une difficulté qu'on rencontrera sur les vrais
+  extranets. Le but n'est pas de remplir ces formulaires, mais de vérifier que
+  <strong>la sonde répond juste à chaque fois</strong> — avant de la sortir en conditions réelles.
+</p>
+
+<div class="mode">
+  <b>Mode d'emploi</b>
+  <ol>
+    <li>Ouvrir une page du tableau</li>
+    <li>Icône de la sonde → <b>« Observer ce site »</b> (une seule fois pour tout le banc)</li>
+    <li>Faire ce que la page demande : cliquer Suivant, recharger, choisir une option…</li>
+    <li>Rouvrir le panneau et comparer avec la colonne « Réponse attendue »</li>
+    <li><b>« Tout effacer »</b> avant de passer au cas suivant, pour lire un résultat propre</li>
+  </ol>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Cas</th><th>Ce qu'il reproduit</th><th>Réponse attendue</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="cas"><a href="../test-formulaire.html">A</a></td>
+      <td><b>Rechargement complet</b><br>Deux pages distinctes, navigation classique</td>
+      <td>Q1 = 2 formulaires<br>Q2 = rechargement complet</td>
+    </tr>
+    <tr>
+      <td class="cas"><a href="b-spa.html">B</a></td>
+      <td><b>Route interne (SPA)</b><br>L'URL change, la page ne recharge jamais</td>
+      <td>Q1 = 3 formulaires<br>Q2 = route interne</td>
+    </tr>
+    <tr>
+      <td class="cas"><a href="c-ajax.html">C</a></td>
+      <td><b>Remplacement partiel</b><br>Le HTML est remplacé, l'URL ne bouge pas</td>
+      <td>Q1 = 2 formulaires<br>Q2 = remplacement partiel</td>
+    </tr>
+    <tr>
+      <td class="cas"><a href="d-instable.html">D</a></td>
+      <td><b>Identifiants regénérés</b><br>Les <code>id</code> changent à chaque chargement</td>
+      <td>Après 2 × F5 :<br>Q3 = ide 0% · nom 0% · lib 100%<br>verdict = difficile</td>
+    </tr>
+    <tr>
+      <td class="cas"><a href="f-iframe.html">F</a></td>
+      <td><b>Formulaire encadré</b><br>Les champs vivent dans un <code>&lt;iframe&gt;</code></td>
+      <td>Le formulaire est relevé<br>Q6 signale le cadre</td>
+    </tr>
+    <tr>
+      <td class="cas"><a href="g-captcha.html">G</a></td>
+      <td><b>Captcha</b><br>Marqueur de protection anti-robot</td>
+      <td>Q6 = captcha<br>verdict = hors périmètre</td>
+    </tr>
+    <tr>
+      <td class="cas"><a href="h-sans-form.html">H</a></td>
+      <td><b>Sans <code>&lt;form&gt;</code> + conditionnels</b><br>Champs flottants, 3 champs qui apparaissent</td>
+      <td>Le formulaire est quand même relevé<br>Q5 = 3 champs</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 style="font-size:17px;margin-top:32px">Les deux cas qui comptent vraiment</h2>
+<p>
+  <b>Cas B et cas D.</b> Ce sont les deux seules réponses capables de changer l'architecture
+  du moteur de remplissage :
+</p>
+<ul>
+  <li><b>B</b> — si un extranet est une SPA, le script de contenu survit à la navigation et il
+  faut un observateur de mutations ; s'il recharge, le script meurt à chaque page et l'état doit
+  vivre ailleurs. Deux moteurs différents.</li>
+  <li><b>D</b> — si les identifiants sont regénérés, aucun sélecteur CSS n'est utilisable et
+  seuls les libellés permettent de retrouver un champ. La cascade de sélecteurs s'inverse.</li>
+</ul>
+
+<p style="font-size:13px;color:#555;margin-top:28px">
+  Rappel : la sonde n'écrit dans aucun champ, ne clique sur aucun bouton et ne relève aucune
+  valeur saisie. Sur ces pages comme sur un vrai extranet.
+</p>
+
+</body>
+</html>

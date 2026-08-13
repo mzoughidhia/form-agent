@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Form Agent Test",
+  "version": "1.0",
+  "description": "Agent de remplissage automatique de formulaires",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}
