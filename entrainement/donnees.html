@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Jeux de données — terrain d entraînement</title>
+<link rel="stylesheet" href="forme.css">
+</head>
+<body>
+
+<h1>Jeux de données</h1>
+<p class="sous">ce qu il faut saisir, formulaire par formulaire</p>
+
+<div class="mode">
+  <b>Garde cette page ouverte dans un second onglet.</b>
+  Le rapprochement par valeur ne fonctionne que si ce que tu tapes correspond vraiment
+  à la fiche du client choisi — taper n importe quoi n apprend rien.
+</div>
+
+<div id="fiches"></div>
+
+<p class="aide" style="margin-top:16px"><a href="index.html">← retour au sommaire</a></p>
+
+<script src="fiche.js"></script>
+<script>
+const FICHES = [
+    {
+        "titre": "1 — tous les types de champs",
+        "client": "42 — DUPONT Jean",
+        "lien": "1-tous-les-champs.html",
+        "demarche": [
+            "Popup → <b>Client</b> : tape <code>42</code>. Il doit afficher « DUPONT Jean ».",
+            "Remplis les champs ci-dessous <b>à la main</b> : ce sont les valeurs de SA fiche.",
+            "Rouvre le popup : « Dernier entraînement : N champs compris ».",
+            "<code>F5</code>, choisis <b>un autre client</b>, puis <b>Remplir ce formulaire</b>."
+        ],
+        "saisie": [
+            [
+                "Civilité",
+                "Monsieur",
+                ""
+            ],
+            [
+                "Nom de famille",
+                "DUPONT",
+                ""
+            ],
+            [
+                "Prénom",
+                "Jean",
+                ""
+            ],
+            [
+                "Date de naissance",
+                "07/03/1985",
+                ""
+            ],
+            [
+                "Situation familiale",
+                "Marié(e)",
+                ""
+            ],
+            [
+                "Nombre d enfants",
+                "2",
+                ""
+            ],
+            [
+                "Adresse e-mail",
+                "jean.dupont@exemple.fr",
+                ""
+            ],
+            [
+                "Téléphone portable",
+                "0612345678",
+                "tape-le AVEC les espaces : 06 12 34 56 78"
+            ],
+            [
+                "Adresse postale",
+                "12 rue des Lilas",
+                ""
+            ],
+            [
+                "Code postal",
+                "69003",
+                ""
+            ],
+            [
+                "Ville",
+                "Lyon",
+                ""
+            ],
+            [
+                "Pays",
+                "France",
+                ""
+            ],
+            [
+                "Date d effet souhaitée",
+                "01/09/2025",
+                ""
+            ],
+            [
+                "Kilométrage annuel",
+                "12000",
+                ""
+            ],
+            [
+                "Recevoir les offres",
+                "cocher"
+            ],
+            [
+                "Franchise",
+                "laisser vide",
+                "pour la voir en « à compléter »"
+            ],
+            [
+                "Conditions générales",
+                "ne pas cocher"
+            ],
+            [
+                "Mot de passe",
+                "laisser vide"
+            ]
+        ]
+    },
+    {
+        "titre": "2 — formulaire piégé",
+        "client": "77 — MARTIN Claire",
+        "lien": "2-piege.html",
+        "demarche": [
+            "Popup → <b>Client</b> : tape <code>77</code>. Il doit afficher « MARTIN Claire ».",
+            "Remplis les champs ci-dessous <b>à la main</b> : ce sont les valeurs de SA fiche.",
+            "Rouvre le popup : « Dernier entraînement : N champs compris ».",
+            "<code>F5</code>, choisis <b>un autre client</b>, puis <b>Remplir ce formulaire</b>."
+        ],
+        "saisie": [
+            [
+                "Nom de famille",
+                "MARTIN",
+                ""
+            ],
+            [
+                "Prénom",
+                "Claire",
+                ""
+            ],
+            [
+                "Adresse e-mail",
+                "claire.martin@exemple.fr",
+                ""
+            ],
+            [
+                "N° de téléphone portable",
+                "0755112233",
+                "sans espaces cette fois"
+            ],
+            [
+                "Adresse de résidence",
+                "5 avenue de la Gare",
+                ""
+            ],
+            [
+                "Code postal",
+                "38000",
+                ""
+            ],
+            [
+                "1er champ sans libellé",
+                "Grenoble",
+                "placeholder « Commune »"
+            ],
+            [
+                "2e champ sans libellé",
+                "22/11/1987",
+                "title « Date de naissance »"
+            ],
+            [
+                "3e champ sans libellé",
+                "MARTIN",
+                "autocomplete family-name"
+            ],
+            [
+                "Nom d utilisateur",
+                "laisser vide",
+                "faux ami"
+            ],
+            [
+                "Nom du contact d urgence",
+                "laisser vide",
+                "faux ami"
+            ],
+            [
+                "Mot de passe",
+                "laisser vide",
+                "faux ami"
+            ]
+        ]
+    },
+    {
+        "titre": "3 — formulaire à étapes",
+        "client": "55 — LOPEZ Marc",
+        "lien": "3-etapes.html",
+        "demarche": [
+            "Popup → <b>Client</b> : tape <code>55</code>. Il doit afficher « LOPEZ Marc ».",
+            "Remplis les champs ci-dessous <b>à la main</b> : ce sont les valeurs de SA fiche.",
+            "Rouvre le popup : « Dernier entraînement : N champs compris ».",
+            "<code>F5</code>, choisis <b>un autre client</b>, puis <b>Remplir ce formulaire</b>."
+        ],
+        "saisie": [
+            [
+                "1 · Nom de famille",
+                "LOPEZ",
+                ""
+            ],
+            [
+                "1 · Prénom",
+                "Marc",
+                ""
+            ],
+            [
+                "1 · Date de naissance",
+                "19/08/1978",
+                ""
+            ],
+            [
+                "1 · Date d obtention du permis",
+                "24/01/1997",
+                ""
+            ],
+            [
+                "2 · Immatriculation",
+                "JK-789-LM",
+                ""
+            ],
+            [
+                "2 · Marque",
+                "CITROEN",
+                ""
+            ],
+            [
+                "2 · Modèle",
+                "Berlingo",
+                ""
+            ],
+            [
+                "2 · Énergie",
+                "Diesel",
+                ""
+            ],
+            [
+                "2 · 1re mise en circulation",
+                "09/11/2014",
+                ""
+            ],
+            [
+                "3 · Coefficient bonus-malus",
+                "1,26",
+                ""
+            ],
+            [
+                "3 · Nombre de sinistres",
+                "3",
+                ""
+            ],
+            [
+                "3 · Résilié par un assureur",
+                "Oui",
+                ""
+            ],
+            [
+                "4 · Adresse e-mail",
+                "marc.lopez@exemple.fr",
+                ""
+            ],
+            [
+                "4 · Téléphone",
+                "0781459023",
+                ""
+            ],
+            [
+                "4 · Date d effet",
+                "01/10/2025",
+                ""
+            ],
+            [
+                "4 · Périodicité",
+                "Trimestrielle",
+                ""
+            ]
+        ]
+    },
+    {
+        "titre": "4 — page 1 sur 3",
+        "client": "61 — NGUYEN Linh",
+        "lien": "4-page-1.html",
+        "demarche": [
+            "Popup → <b>Client</b> : tape <code>61</code>. Il doit afficher « NGUYEN Linh ».",
+            "Remplis les champs ci-dessous <b>à la main</b> : ce sont les valeurs de SA fiche.",
+            "Rouvre le popup : « Dernier entraînement : N champs compris ».",
+            "<code>F5</code>, choisis <b>un autre client</b>, puis <b>Remplir ce formulaire</b>."
+        ],
+        "saisie": [
+            [
+                "Civilité",
+                "Madame",
+                ""
+            ],
+            [
+                "Nom de famille",
+                "NGUYEN",
+                ""
+            ],
+            [
+                "Prénom",
+                "Linh",
+                ""
+            ],
+            [
+                "Date de naissance",
+                "12/04/1991",
+                ""
+            ],
+            [
+                "Profession",
+                "Infirmière",
+                ""
+            ]
+        ]
+    },
+    {
+        "titre": "4 — page 2 sur 3",
+        "client": "61 — NGUYEN Linh",
+        "lien": "4-page-2.html",
+        "demarche": [
+            "Popup → <b>Client</b> : tape <code>61</code>. Il doit afficher « NGUYEN Linh ».",
+            "Remplis les champs ci-dessous <b>à la main</b> : ce sont les valeurs de SA fiche.",
+            "Rouvre le popup : « Dernier entraînement : N champs compris ».",
+            "<code>F5</code>, choisis <b>un autre client</b>, puis <b>Remplir ce formulaire</b>."
+        ],
+        "saisie": [
+            [
+                "Adresse postale",
+                "8 rue du Verger",
+                ""
+            ],
+            [
+                "Complément d adresse",
+                "Escalier C, 2e étage",
+                ""
+            ],
+            [
+                "Code postal",
+                "44000",
+                ""
+            ],
+            [
+                "Ville",
+                "Nantes",
+                ""
+            ],
+            [
+                "Vous êtes",
+                "Propriétaire occupant",
+                ""
+            ],
+            [
+                "Depuis quand",
+                "15/03/2023",
+                ""
+            ]
+        ]
+    },
+    {
+        "titre": "4 — page 3 sur 3",
+        "client": "61 — NGUYEN Linh",
+        "lien": "4-page-3.html",
+        "demarche": [
+            "Popup → <b>Client</b> : tape <code>61</code>. Il doit afficher « NGUYEN Linh ».",
+            "Remplis les champs ci-dessous <b>à la main</b> : ce sont les valeurs de SA fiche.",
+            "Rouvre le popup : « Dernier entraînement : N champs compris ».",
+            "<code>F5</code>, choisis <b>un autre client</b>, puis <b>Remplir ce formulaire</b>."
+        ],
+        "saisie": [
+            [
+                "Adresse e-mail",
+                "linh.nguyen@exemple.fr",
+                ""
+            ],
+            [
+                "Téléphone portable",
+                "0640127788",
+                ""
+            ],
+            [
+                "Créneau de rappel",
+                "Matin",
+                ""
+            ],
+            [
+                "Remarque",
+                "laisser vide"
+            ],
+            [
+                "Conditions générales",
+                "ne pas cocher"
+            ]
+        ]
+    },
+    {
+        "titre": "5 — tous les types de boutons",
+        "client": "73 — GARCIA Paulo",
+        "lien": "5-boutons.html",
+        "demarche": [
+            "Popup → <b>Client</b> : tape <code>73</code>. Il doit afficher « GARCIA Paulo ».",
+            "Remplis les champs ci-dessous <b>à la main</b> : ce sont les valeurs de SA fiche.",
+            "Rouvre le popup : « Dernier entraînement : N champs compris ».",
+            "<code>F5</code>, choisis <b>un autre client</b>, puis <b>Remplir ce formulaire</b>."
+        ],
+        "saisie": [
+            [
+                "Nom de famille",
+                "GARCIA",
+                ""
+            ],
+            [
+                "Adresse e-mail",
+                "paulo.garcia@exemple.fr",
+                ""
+            ],
+            [
+                "Nom du conjoint",
+                "GARCIA",
+                ""
+            ],
+            [
+                "Date de naissance du conjoint",
+                "16/09/1983",
+                ""
+            ],
+            [
+                "Date de naissance du 1er enfant",
+                "21/03/2011",
+                ""
+            ],
+            [
+                "IBAN",
+                "FR7610278073110002056980184",
+                ""
+            ],
+            [
+                "Titulaire du compte",
+                "GARCIA Paulo",
+                ""
+            ],
+            [
+                "Nom du conducteur 2",
+                "MARTIN",
+                "ligne créée par un bouton"
+            ]
+        ]
+    }
+];
+
+FICHES.forEach((fiche) => Fiche.afficher(fiche));
+</script>
+</body>
+</html>

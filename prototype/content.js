@@ -796,6 +796,31 @@ function observer(formulaire) {
 let minuteur = null;
 let enCoursDeRemplissage = false;
 
+// Une seule fois par page : au-delà, c'est du harcèlement.
+let sansClientSignale = false;
+
+function avertirSansClient() {
+    if (sansClientSignale) {
+        return;
+    }
+
+    sansClientSignale = true;
+
+    console.warn(
+        "Form Agent — aucun client sélectionné : votre saisie n'apprend rien. " +
+        "Ouvrez le popup et tapez un numéro de client (42, 77, 18)."
+    );
+
+    alerter(
+        [{ cle: "—", libelle: "Votre saisie n'est rattachée à aucune fiche client." }],
+        {
+            titre: "Aucun client sélectionné — cette saisie n'apprend rien",
+            suite: "Ouvrez le popup, tapez un numéro de client (42, 77, 18), " +
+                "puis recommencez la saisie."
+        }
+    );
+}
+
 function enregistrer(formulaire) {
 
     // L'extension a été rechargée pendant que l'onglet était ouvert : le
@@ -817,16 +842,88 @@ function enregistrer(formulaire) {
     }
 
     chrome.storage.local.get(
-        ["profil", "appris", "formulaires"],
+        ["profil", "appris", "formulaires", "recettes", "clientActif"],
         (etat) => {
-            const formulaires = etat.formulaires || {};
-            formulaires[releve.empreinte.cle] = releve.empreinte;
+            const identite = Compagnies.identifier(location.href);
+            const aEcrire = {};
 
-            chrome.storage.local.set({
-                profil: { ...(etat.profil || {}), ...releve.profil },
-                appris: { ...(etat.appris || {}), ...releve.appris },
-                formulaires
-            });
+            // SANS client actif : mémoire historique, par valeurs.
+            // AVEC un client actif : on n'apprend QUE le sens des champs.
+            // Mémoriser aussi les valeurs polluerait le profil avec les
+            // données d'un dossier — c'est ce qui faisait réapparaître la
+            // saisie manuelle dans le popup.
+            if (!etat.clientActif) {
+                // Le courtier saisit, et l'extension n'apprend rien parce
+                // qu'aucune fiche ne sert de référence. Se taire ici, c'est
+                // lui faire perdre sa saisie sans qu'il le sache.
+                avertirSansClient();
+
+                const formulaires = etat.formulaires || {};
+                formulaires[releve.empreinte.cle] = releve.empreinte;
+
+                aEcrire.profil = { ...(etat.profil || {}), ...releve.profil };
+                aEcrire.appris = { ...(etat.appris || {}), ...releve.appris };
+                aEcrire.formulaires = formulaires;
+            }
+
+            if (etat.clientActif && identite) {
+
+                // Le courtier vient de choisir un client : l'avertissement
+                // n'a plus lieu d'être, et le laisser à l'écran ferait
+                // douter d'un apprentissage qui, lui, fonctionne.
+                if (sansClientSignale) {
+                    sansClientSignale = false;
+                    retirerAlerte();
+                }
+
+                const lecon = apprendre(formulaire, etat.clientActif);
+                const recettes = etat.recettes || {};
+
+                if (lecon.champs.length > 0) {
+                    recettes[identite.cle] = fusionnerRecette(
+                        recettes[identite.cle],
+                        lecon.champs,
+                        identite
+                    );
+
+                    aEcrire.recettes = recettes;
+
+                    console.log(
+                        `Form Agent — ${lecon.champs.length} champ(s) compris sur ` +
+                        `${identite.compagnie || identite.hote}`
+                    );
+                }
+
+                lecon.hesitations.forEach((doute) => {
+                    console.warn(
+                        `Form Agent — « ${doute.champ} » : impossible de trancher entre ` +
+                        doute.entre.join(" et ")
+                    );
+                });
+
+                if (lecon.nonReconnus.length > 0) {
+                    console.warn(
+                        `Form Agent — ${lecon.nonReconnus.length} champ(s) non reconnus : ` +
+                        lecon.nonReconnus.join(", ") +
+                        ". Les valeurs tapées ne sont dans la fiche d'aucun client — " +
+                        "vérifie que le bon client est sélectionné."
+                    );
+                }
+
+                // Le compte rendu du dernier apprentissage, pour le popup.
+                // Aucune valeur saisie : seulement des libellés de champs.
+                aEcrire.derniereLecon = {
+                    client: etat.clientActif.id,
+                    nomClient: etat.clientActif.nom,
+                    formulaire: identite.compagnie || identite.hote,
+                    compris: lecon.champs.length,
+                    nonReconnus: lecon.nonReconnus,
+                    hesitations: lecon.hesitations.map((doute) => doute.champ),
+                    date: Date.now()
+                };
+            }
+
+            chrome.storage.local.set(aEcrire);
         }
     );
 }
@@ -864,16 +961,291 @@ document.addEventListener("submit", (evenement) => {
 }, true);
 
 // ===========================================================================
+//  L'ONTOLOGIE AU MILIEU
+//
+//  Jusqu'ici l'extension retenait « dans ce champ, il y avait 07/03/1985 ».
+//  Elle rejouait donc la même date pour tous les clients.
+//
+//  Désormais, quand une fiche client est active, elle retient « ce champ,
+//  c'est client.birthDate, écrit en JJ/MM/AAAA ». La recette ne contient
+//  plus aucune donnée personnelle : elle vaut pour n'importe quel client.
+// ===========================================================================
+
+let dictionnaire = null;
+
+// Libellé normalisé → clé canonique. 92 champs, 333 libellés : c'est ce que
+// l'ontologie sait AVANT d'avoir vu le moindre formulaire.
+function dictionnaireDesLibelles() {
+    if (dictionnaire) {
+        return dictionnaire;
+    }
+
+    dictionnaire = new Map();
+
+    ONTOLOGIE.fields.forEach((champ) => {
+        [champ.label, ...champ.synonyms].forEach((texte) => {
+            const cle = normaliser(texte);
+
+            if (cle && !dictionnaire.has(cle)) {
+                dictionnaire.set(cle, champ.key);
+            }
+        });
+    });
+
+    return dictionnaire;
+}
+
+function cleParLibelle(champ) {
+    const index = dictionnaireDesLibelles();
+
+    const candidats = [
+        texteLabel(champ),
+        champ.getAttribute("aria-label"),
+        champ.placeholder,
+        champ.title,
+        texteVoisin(champ),
+        champ.name,
+        champ.id
+    ];
+
+    for (const candidat of candidats) {
+        const trouve = index.get(normaliser(candidat));
+
+        if (trouve) {
+            return trouve;
+        }
+    }
+
+    return null;
+}
+
+function libelleCanonique(cle) {
+    const champ = Variantes.champDe(cle);
+
+    return champ ? champ.label : cle;
+}
+
+/**
+ * La fiche du client, enrichie de ce que le courtier a complété à la main
+ * dans le popup. Les compléments ne remplacent jamais la fiche d'origine :
+ * ils la rattrapent là où elle est muette.
+ */
+function ficheComplete(client, complements) {
+    if (!client) {
+        return null;
+    }
+
+    const supplement = (complements || {})[client.id] || {};
+
+    return {
+        ...client,
+        donnees: { ...client.donnees, ...supplement }
+    };
+}
+
+/**
+ * APPRENDRE — rapprochement par valeur.
+ *
+ * Pour chaque champ rempli, on demande : quelle donnée de la fiche pouvait
+ * produire ça ? Une seule réponse → on apprend le champ ET son format.
+ * Plusieurs → le libellé départage. Aucune → on tente le dictionnaire.
+ */
+function apprendre(formulaire, fiche) {
+    const champs = champsDe(formulaire);
+    const retenus = [];
+    const hesitations = [];
+    const nonReconnus = [];
+
+    champsUniques(formulaire).forEach((champ) => {
+
+        if (champ.type === "checkbox" && estConsentement(champ)) {
+            return;
+        }
+
+        const valeur = lireValeur(champ);
+
+        if (!valeur) {
+            return;
+        }
+
+        const candidats = Variantes.rapprocher(valeur, fiche.donnees);
+        const parLibelle = cleParLibelle(champ);
+        let retenu = null;
+
+        if (candidats.length === 1) {
+            retenu = candidats[0];
+        } else if (candidats.length > 1) {
+            // « 0612345678 » peut être le portable ou le fixe : c'est le
+            // libellé du champ qui tranche.
+            retenu = candidats.find((candidat) => candidat.cle === parLibelle) || null;
+
+            if (!retenu) {
+                hesitations.push({
+                    champ: signature(champ) || "(sans libellé)",
+                    entre: candidats.map((candidat) => candidat.cle)
+                });
+            }
+        }
+
+        // Rien ne correspond en valeur, mais le libellé est connu et la
+        // fiche porte la donnée : c'est le même champ, écrit autrement.
+        if (!retenu && parLibelle && fiche.donnees[parLibelle] !== undefined) {
+            retenu = { cle: parLibelle, format: null };
+        }
+
+        if (!retenu) {
+            // Une valeur saisie qui ne correspond à aucune donnée de la
+            // fiche, et dont le libellé n'est pas connu de l'ontologie.
+            // C'est LE cas à signaler : sans ça, le courtier croit avoir
+            // entraîné l'extension alors qu'elle n'a rien retenu.
+            nonReconnus.push(signature(champ) || selecteurDe(champ, champs));
+            return;
+        }
+
+        retenus.push({
+            selecteur: selecteurDe(champ, champs),
+            libelle: signature(champ) || "",
+            type: champ.tagName === "SELECT" ? "select" : champ.type,
+            cle: retenu.cle,
+            format: retenu.format
+        });
+    });
+
+    return { champs: retenus, hesitations, nonReconnus };
+}
+
+// La recette est fusionnée, jamais remplacée : une étape de tunnel ne doit
+// pas effacer ce qu'on sait des autres.
+function fusionnerRecette(ancienne, nouveaux, identite) {
+    const parSelecteur = new Map(
+        (ancienne ? ancienne.champs : []).map((entree) => [entree.selecteur, entree])
+    );
+
+    nouveaux.forEach((entree) => parSelecteur.set(entree.selecteur, entree));
+
+    return {
+        compagnie: identite.compagnie,
+        service: identite.service,
+        hote: identite.hote,
+        chemin: identite.chemin,
+        miseAJour: Date.now(),
+        champs: Array.from(parSelecteur.values())
+    };
+}
+
+// ===========================================================================
 //  REMPLISSAGE
 // ===========================================================================
-function remplir(profil, appris, formulaires) {
+// Un champ qui porte déjà quelque chose. En remplissage automatique, on ne
+// l'écrase pas : le courtier est peut-être en train d'y saisir.
+function dejaRempli(champ) {
+    if (champ.type === "radio") {
+        return boutonsDuGroupe(champ).some((bouton) => bouton.checked);
+    }
+
+    if (champ.type === "checkbox") {
+        return champ.checked;
+    }
+
+    if (champ.tagName === "SELECT") {
+        const option = champ.selectedOptions[0];
+        return Boolean(option && option.value);
+    }
+
+    return champ.value.trim() !== "";
+}
+
+function remplir(memoire, options) {
+    const choix = options || {};
+    const seulementVides = Boolean(choix.seulementVides);
+
+    // Mode strict : SEULE la recette de ce formulaire s'applique. Ni
+    // dictionnaire, ni mémoire historique. Un formulaire jamais entraîné
+    // reste vide — c'est ce qu'il faut pour éprouver un formulaire à la fois.
+    const strict = Boolean(choix.recetteSeule || memoire.strict);
+
+    const profil = memoire.profil || {};
+    const appris = memoire.appris || {};
+    const formulaires = memoire.formulaires || {};
+    const recettes = memoire.recettes || {};
+    const fiche = ficheComplete(memoire.clientActif, memoire.complements);
+
     const journal = [];
+    const manquants = [];
     const traites = new Set();
 
     const cibles = [...Array.from(document.forms), null];
 
+    // 0. La recette + la fiche client : le chemin qui vaut pour TOUS les
+    //    clients. Il passe avant tout le reste.
+    const identite = Compagnies.identifier(location.href);
+    const recette = identite ? recettes[identite.cle] : null;
+
+    if (recette && fiche) {
+        cibles.forEach((formulaire) => {
+            const champs = champsDe(formulaire);
+
+            recette.champs.forEach((entree) => {
+                const champ = retrouver(entree, champs);
+
+                if (!champ || ignorer(champ) || traites.has(champ)) {
+                    return;
+                }
+
+                if (seulementVides && dejaRempli(champ)) {
+                    return;
+                }
+
+                const brute = fiche.donnees[entree.cle];
+
+                if (brute === undefined || brute === "") {
+                    // La fiche ne porte pas la donnée : ce n'est pas un
+                    // défaut de l'extension, c'est au courtier de compléter.
+                    if (!manquants.some((manque) => manque.cle === entree.cle)) {
+                        manquants.push({
+                            cle: entree.cle,
+                            libelle: libelleCanonique(entree.cle),
+                            surLeFormulaire: entree.libelle
+                        });
+                    }
+                    return;
+                }
+
+                const texte = entree.format
+                    ? Variantes.formater(entree.cle, brute, entree.format)
+                    : (Variantes.de(entree.cle, brute)[0] || { texte: brute }).texte;
+
+                if (!ecrireChamp(champ, texte)) {
+                    return;
+                }
+
+                if (champ.type === "radio") {
+                    boutonsDuGroupe(champ).forEach((bouton) => traites.add(bouton));
+                } else {
+                    traites.add(champ);
+                }
+
+                journal.push({
+                    champ: entree.selecteur,
+                    origine: `fiche » ${entree.cle}` +
+                        (entree.format ? ` (${entree.format})` : "") +
+                        (estVisible(champ) ? "" : "  [masqué]"),
+                    score: 100
+                });
+            });
+        });
+    }
+
     // 1. Restitution exacte à partir de l'empreinte du formulaire.
     cibles.forEach((formulaire) => {
+
+        // Un client est actif : on n'écrit QUE ses données. Les valeurs
+        // mémorisées viennent d'une saisie précédente, faite pour un autre
+        // dossier — les mélanger produirait un devis faux.
+        if (fiche || strict) {
+            return;
+        }
+
         const empreinte = (formulaires || {})[cleFormulaire(formulaire)];
 
         if (!empreinte) {
@@ -891,6 +1263,10 @@ function remplir(profil, appris, formulaires) {
             const champ = retrouver(fiche, champs);
 
             if (!champ || ignorer(champ) || traites.has(champ)) {
+                return;
+            }
+
+            if (seulementVides && dejaRempli(champ)) {
                 return;
             }
 
@@ -914,11 +1290,20 @@ function remplir(profil, appris, formulaires) {
     });
 
     // 2. Repli pour tout ce que l'empreinte ne couvre pas :
-    //    règles connues, puis mémoire transversale.
+    //    dictionnaire de l'ontologie, ou mémoire historique.
+    //    En mode strict, on s'arrête ici : rien d'autre que la recette.
+    if (strict) {
+        return { journal, manquants };
+    }
+
     cibles.forEach((formulaire) => {
         champsUniques(formulaire).forEach((champ) => {
 
             if (traites.has(champ)) {
+                return;
+            }
+
+            if (seulementVides && dejaRempli(champ)) {
                 return;
             }
 
@@ -931,19 +1316,45 @@ function remplir(profil, appris, formulaires) {
                 return;
             }
 
-            const trouvee = trouverRegle(champ);
+            let valeur = null;
+            let origine = null;
+            let note = 0;
 
-            let valeur = trouvee ? profil[trouvee.regle.cle] : null;
-            let origine = trouvee ? `regle » ${trouvee.regle.cle}` : null;
-            let note = trouvee ? trouvee.score : 0;
+            if (fiche) {
+                // Client actif : la seule source est sa fiche. Le champ n'est
+                // pas dans la recette, mais son libellé est peut-être connu
+                // de l'ontologie — c'est le dictionnaire qui le rattrape.
+                const cle = cleParLibelle(champ);
+                const brute = cle ? fiche.donnees[cle] : undefined;
 
-            if (!valeur) {
-                const rappel = chercherAppris(champ, appris);
+                if (cle && (brute === undefined || brute === "")) {
+                    if (!manquants.some((manque) => manque.cle === cle)) {
+                        manquants.push({
+                            cle,
+                            libelle: libelleCanonique(cle),
+                            surLeFormulaire: signature(champ) || ""
+                        });
+                    }
+                } else if (cle) {
+                    valeur = (Variantes.de(cle, brute)[0] || { texte: brute }).texte;
+                    origine = `dictionnaire » ${cle}`;
+                    note = 80;
+                }
+            } else {
+                const trouvee = trouverRegle(champ);
 
-                if (rappel) {
-                    valeur = rappel.valeur;
-                    origine = `appris » ${rappel.cle}`;
-                    note = rappel.exact ? 100 : 60;
+                valeur = trouvee ? profil[trouvee.regle.cle] : null;
+                origine = trouvee ? `regle » ${trouvee.regle.cle}` : null;
+                note = trouvee ? trouvee.score : 0;
+
+                if (!valeur) {
+                    const rappel = chercherAppris(champ, appris);
+
+                    if (rappel) {
+                        valeur = rappel.valeur;
+                        origine = `appris » ${rappel.cle}`;
+                        note = rappel.exact ? 100 : 60;
+                    }
                 }
             }
 
@@ -961,11 +1372,119 @@ function remplir(profil, appris, formulaires) {
         });
     });
 
-    return journal;
+    return { journal, manquants };
 }
 
-// État des empreintes connues pour la page courante, pour le popup.
-function etat() {
+// ===========================================================================
+//  L'ALERTE DANS LA PAGE
+//
+//  Le courtier ne doit pas avoir à ouvrir le popup pour savoir qu'il manque
+//  une donnée : il relit le formulaire, pas l'extension.
+// ===========================================================================
+
+const ID_ALERTE = "form-agent-alerte";
+
+function retirerAlerte() {
+    const ancienne = document.getElementById(ID_ALERTE);
+
+    if (ancienne) {
+        ancienne.remove();
+    }
+}
+
+/**
+ * Le bandeau d'alerte, en bas de la page.
+ *
+ * `sur_mesure` remplace l'intitulé « N données manquent » : il sert aux
+ * avertissements qui ne parlent pas de données absentes — le premier étant
+ * « aucun client sélectionné », qui doit se lire sans ouvrir le popup.
+ */
+function alerter(manquants, sur_mesure) {
+    retirerAlerte();
+
+    if (manquants.length === 0) {
+        return;
+    }
+
+    const bandeau = document.createElement("div");
+
+    bandeau.id = ID_ALERTE;
+    bandeau.style.cssText = [
+        "position:fixed", "left:16px", "right:16px", "bottom:16px", "z-index:2147483647",
+        "background:#f8eeda", "border-left:4px solid #8a5a00", "color:#5c3d00",
+        "font:13px/1.5 system-ui,'Segoe UI',sans-serif", "padding:12px 16px",
+        "border-radius:3px", "box-shadow:0 2px 12px rgba(0,0,0,.18)",
+        "display:flex", "gap:12px", "align-items:flex-start"
+    ].join(";");
+
+    const texte = document.createElement("div");
+    texte.style.flex = "1";
+
+    const titre = document.createElement("b");
+    titre.textContent = sur_mesure
+        ? sur_mesure.titre
+        : (manquants.length === 1
+            ? "1 donnée manque pour ce formulaire"
+            : `${manquants.length} données manquent pour ce formulaire`);
+
+    const liste = document.createElement("div");
+    liste.style.marginTop = "3px";
+    liste.textContent = manquants.map((manque) => manque.libelle).join("  ·  ");
+
+    const suite = document.createElement("div");
+    suite.style.cssText = "margin-top:5px;font-size:12px;opacity:.85";
+    suite.textContent = sur_mesure
+        ? sur_mesure.suite
+        : "À compléter dans la fiche du client, ou directement dans le popup.";
+
+    texte.append(titre, liste, suite);
+
+    const fermer = document.createElement("button");
+    fermer.textContent = "Fermer";
+    fermer.style.cssText =
+        "font:inherit;font-size:12px;padding:4px 10px;cursor:pointer;" +
+        "border:1px solid #c9a86a;border-radius:3px;background:#fff;color:#5c3d00";
+    fermer.addEventListener("click", retirerAlerte);
+
+    bandeau.append(texte, fermer);
+    document.body.append(bandeau);
+}
+
+// État de la page pour le popup : les empreintes, l'identité du formulaire,
+// et surtout la LISTE DES CHAMPS tels qu'ils sont sur cette page — c'est
+// elle qui permet au popup d'être le miroir du formulaire.
+function champsDuFormulaire(recette) {
+    const parSelecteur = new Map(
+        (recette ? recette.champs : []).map((entree) => [entree.selecteur, entree])
+    );
+
+    const vus = [];
+
+    [...Array.from(document.forms), null].forEach((formulaire) => {
+        const champs = champsDe(formulaire);
+
+        champsUniques(formulaire).forEach((champ) => {
+            const selecteur = selecteurDe(champ, champs);
+            const apprise = parSelecteur.get(selecteur);
+            const cle = apprise ? apprise.cle : cleParLibelle(champ);
+
+            vus.push({
+                selecteur,
+                libelle: signature(champ) || "(sans libellé)",
+                type: champ.tagName === "SELECT" ? "select" : champ.type,
+                cle: cle || null,
+                format: apprise ? apprise.format : null,
+                origine: apprise ? "recette" : (cle ? "dictionnaire" : null),
+                visible: estVisible(champ),
+                consentement: champ.type === "checkbox" && estConsentement(champ)
+            });
+        });
+    });
+
+    return vus;
+}
+
+function etat(recettes) {
     const cibles = [...Array.from(document.forms), null];
     const connus = [];
 
@@ -977,7 +1496,17 @@ function etat() {
         });
     });
 
-    return { url: location.origin + location.pathname, formulaires: connus };
+    const identite = Compagnies.identifier(location.href);
+    const recette = identite ? (recettes || {})[identite.cle] : null;
+
+    return {
+        url: location.origin + location.pathname,
+        formulaires: connus,
+        // Qui est en face : c'est ce que le popup affiche en tête.
+        identite,
+        // Le formulaire, champ par champ : le popup s'y conforme.
+        champs: champsDuFormulaire(recette)
+    };
 }
 
 // ===========================================================================
@@ -1022,27 +1551,52 @@ function remplirDepuisLaMemoire(origine) {
     }
 
     chrome.storage.local.get(
-        ["profil", "appris", "formulaires", "parcours"],
+        [
+            "profil", "appris", "formulaires", "recettes", "clientActif",
+            "complements", "parcours"
+        ],
         (etat) => {
 
         if (!parcoursActif(etat)) {
             return;
         }
 
+        // UN FORMULAIRE JAMAIS APPRIS RESTE VIDE.
+        //
+        // Sans cette porte, le parcours armé sur un formulaire remplissait
+        // tous les autres du même site — impossible d'en éprouver un seul.
+        const identiteAuto = Compagnies.identifier(location.href);
+        const connu = identiteAuto && (etat.recettes || {})[identiteAuto.cle];
+
+        if (!connu) {
+            return;
+        }
+
         autoRestants -= 1;
         enCoursDeRemplissage = true;
 
-        const journal = remplir(
-            etat.profil || {},
-            etat.appris || {},
-            etat.formulaires || {}
-        );
+        // En automatique : la recette de CE formulaire, rien d'autre, et
+        // jamais par-dessus une saisie en cours.
+        const resultat = remplir(etat, {
+            seulementVides: true,
+            recetteSeule: true
+        });
 
         setTimeout(() => { enCoursDeRemplissage = false; }, 300);
 
-        if (journal.length > 0) {
-            console.log(`Form Agent — ${journal.length} champ(s) remplis (${origine})`);
-            console.table(journal);
+        if (resultat.journal.length > 0) {
+            console.log(
+                `Form Agent — ${resultat.journal.length} champ(s) remplis (${origine})`
+            );
+            console.table(resultat.journal);
+        }
+
+        if (resultat.manquants.length > 0) {
+            console.warn(
+                "Form Agent — à compléter dans le CRM : " +
+                resultat.manquants.map((manque) => manque.libelle).join(", ")
+            );
+            alerter(resultat.manquants);
         }
     });
 }
@@ -1050,7 +1604,18 @@ function remplirDepuisLaMemoire(origine) {
 function surveillerLaPage() {
     // Les champs arrivent souvent après la page : appel AJAX, étape suivante
     // d'un tunnel, bloc déplié par un bouton.
-    new MutationObserver(() => {
+    new MutationObserver((mutations) => {
+
+        // Notre propre bandeau d'alerte ne doit pas relancer le cycle.
+        const notre = mutations.every((mutation) =>
+            mutation.target.id === ID_ALERTE ||
+            (mutation.target.closest && mutation.target.closest(`#${ID_ALERTE}`))
+        );
+
+        if (notre) {
+            return;
+        }
+
         clearTimeout(minuteurAuto);
         minuteurAuto = setTimeout(
             () => remplirDepuisLaMemoire("nouveaux champs"),
@@ -1083,27 +1648,34 @@ if (contexteVivant()) {
 chrome.runtime.onMessage.addListener((message, expediteur, repondre) => {
 
     if (message.action === "etat") {
-        repondre(etat());
-        return;
+        // Réponse asynchrone : il faut la recette pour dire, champ par
+        // champ, ce que l'extension sait déjà de ce formulaire.
+        chrome.storage.local.get("recettes", (memoire) => {
+            repondre(etat(memoire.recettes || {}));
+        });
+
+        return true;
     }
 
     if (message.action === "remplir") {
         enCoursDeRemplissage = true;
 
-        const journal = remplir(
-            message.profil || {},
-            message.appris || {},
-            message.formulaires || {}
-        );
+        const resultat = remplir(message);
 
         // Laisse passer les événements que l'on vient d'émettre avant de
         // réactiver l'observation, sinon on réenregistre son propre travail.
         setTimeout(() => { enCoursDeRemplissage = false; }, 300);
 
-        const remplis = journal.filter((ligne) => ligne.score > 0).length;
+        const remplis = resultat.journal.filter((ligne) => ligne.score > 0).length;
 
-        console.table(journal);
-        repondre({ remplis, journal });
+        console.table(resultat.journal);
+        alerter(resultat.manquants);
+
+        repondre({
+            remplis,
+            journal: resultat.journal,
+            manquants: resultat.manquants
+        });
         return;
     }
 });

@@ -198,6 +198,192 @@
             margin: 0 0 10px 24px;
         }
 
+        #miroir { display: none; margin-bottom: 10px; }
+        #miroir.visible { display: block; }
+        #miroir h4 { margin-bottom: 2px; }
+
+        .rangee {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+            border-bottom: 1px solid #eff2f7;
+        }
+
+        .rangee .quoi {
+            flex: 0 0 42%;
+            font-size: 11.5px;
+            color: #4c5567;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rangee input {
+            flex: 1;
+            margin: 0;
+            font-size: 11.5px;
+            padding: 3px 5px;
+        }
+
+        .rangee.manque input {
+            border-color: #a11d1d;
+            background: #faeaea;
+        }
+
+        .rangee.inconnu .quoi { color: #a1a8b5; font-style: italic; }
+        .rangee.inconnu input { background: #f6f7fa; color: #a1a8b5; }
+
+        .rangee .marque {
+            flex: 0 0 auto;
+            font-size: 9px;
+            font-family: ui-monospace, Consolas, monospace;
+            color: #7b8496;
+            text-transform: uppercase;
+        }
+
+        #lecon:not(:empty) {
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            font-size: 11.5px;
+            border-left: 3px solid #dce1ea;
+            background: #eff2f7;
+        }
+
+        #lecon b { display: block; margin-bottom: 2px; font-size: 12px; }
+        #lecon span { display: block; margin-top: 3px; }
+        #lecon.reussi { border-left-color: #16744a; background: #e2f2ea; color: #16744a; }
+        #lecon.partiel { border-left-color: #8a5a00; background: #f8eeda; color: #8a5a00; }
+        #lecon.rate { border-left-color: #a11d1d; background: #faeaea; color: #a11d1d; }
+
+        #recette {
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            border-left: 3px solid #dce1ea;
+            background: #eff2f7;
+        }
+
+        #recette.connue {
+            border-left-color: #16744a;
+            background: #e2f2ea;
+            color: #16744a;
+        }
+
+        #recette.inconnue {
+            border-left-color: #8a5a00;
+            background: #f8eeda;
+            color: #8a5a00;
+        }
+
+        #recette b {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        #recette details {
+            margin-top: 5px;
+        }
+
+        #recette .paire {
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 10.5px;
+            display: block;
+            padding: 1px 0;
+        }
+
+        .etiquette {
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: #7b8496;
+            border: 1px solid #dce1ea;
+            border-radius: 2px;
+            padding: 1px 5px;
+            margin-left: 6px;
+        }
+
+        button.danger {
+            background: #fff;
+            border-color: #e0b4b4;
+            color: #a11d1d;
+            margin-top: 14px;
+        }
+
+        button.danger:hover {
+            background: #faeaea;
+            border-color: #a11d1d;
+            color: #a11d1d;
+        }
+
+        button.danger.confirme {
+            background: #a11d1d;
+            border-color: #a11d1d;
+            color: #fff;
+        }
+
+        .compagnie {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 7px 10px;
+            margin-bottom: 10px;
+            background: #eef1f8;
+            border-left: 3px solid #2b45cc;
+            color: #131821;
+        }
+
+        .compagnie.inconnue {
+            background: #f8eeda;
+            border-left-color: #8a5a00;
+            color: #8a5a00;
+            font-weight: 400;
+        }
+
+        .client {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .client input {
+            width: 90px;
+            margin: 0;
+        }
+
+        .nomClient {
+            font-size: 13px;
+            font-weight: 600;
+            color: #16744a;
+            margin-bottom: 10px;
+            min-height: 18px;
+        }
+
+        .nomClient.absent {
+            color: #a11d1d;
+            font-weight: 400;
+        }
+
+        #manquants:not(:empty) {
+            background: #f8eeda;
+            border-left: 3px solid #8a5a00;
+            color: #8a5a00;
+            padding: 7px 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        #manquants b {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        #manquants li {
+            margin-left: 14px;
+        }
+
         #parcours:not(:empty) {
             background: #e8f5e9;
             border-left: 3px solid #2e7d32;
@@ -212,16 +398,35 @@
 <body>
     <h3>Form Agent</h3>
 
+    <div id="compagnie" class="compagnie">…</div>
+
+    <label class="client">
+        Client
+        <input id="idClient" placeholder="42, 77, 18…" autocomplete="off">
+    </label>
+    <div id="nomClient" class="nomClient"></div>
+
     <p class="aide">
-        Remplis le formulaire une fois : la structure et les valeurs sont
-        enregistrées automatiquement, sans rien cliquer. Ensuite, ce bouton
-        suffit.
+        Première fois sur ce formulaire : choisis le client, remplis à la main.
+        L'extension comprend à quoi correspond chaque champ. Les fois suivantes,
+        ce bouton suffit — pour n'importe quel client.
     </p>
 
     <button id="fill">Remplir ce formulaire</button>
 
+    <div id="manquants"></div>
+
     <label class="option">
-        <input type="checkbox" id="continuer" checked>
+        <input type="checkbox" id="strict">
+        Mode test : ce formulaire seulement
+    </label>
+    <p class="aide indente">
+        Seule la recette de CE formulaire s'applique. Un formulaire jamais entraîné
+        reste vide — aucune donnée ne vient d'ailleurs.
+    </p>
+
+    <label class="option">
+        <input type="checkbox" id="continuer">
         Continuer sur les pages suivantes
     </label>
     <p class="aide indente">
@@ -230,6 +435,25 @@
     </p>
 
     <div id="parcours"></div>
+
+    <div id="miroir">
+        <h4>Ce formulaire, champ par champ <span id="compteurMiroir" class="etiquette"></span></h4>
+        <p class="aide">
+            Ce que l'extension écrira. Les cases vides sont les données qui manquent
+            à la fiche — remplis-les ici, elles seront reprises.
+        </p>
+        <div id="listeMiroir"></div>
+        <button id="enregistrerComplements">Enregistrer les compléments</button>
+    </div>
+
+    <div id="lecon"></div>
+
+    <div id="recette"></div>
+
+    <details id="blocRecettes">
+        <summary><span id="compteurRecettes">Formulaires appris</span></summary>
+        <ul class="memoire" id="listeRecettes"></ul>
+    </details>
 
     <div id="etat">Lecture de la page…</div>
 
@@ -240,7 +464,15 @@
         <ul class="memoire" id="listeStructure"></ul>
     </details>
 
-    <h4>Données connues</h4>
+    <div id="memoireHistorique">
+
+    <h4>Données connues <span class="etiquette">mode sans client</span></h4>
+
+    <p class="aide">
+        Ancienne mémoire, par valeurs : elle ne sert que si aucun client n'est
+        choisi. Dès qu'un client est actif, l'extension n'écrit que les données
+        de sa fiche.
+    </p>
 
     <!-- Champ libre et non liste fermée : l'observation peut ramener
          "Monsieur", "M." ou "Mr" selon le formulaire d'origine. -->
@@ -269,6 +501,18 @@
         <button id="oublierAppris" class="lien">Vider la mémoire apprise</button>
     </details>
 
+    </div><!-- fin de la mémoire historique -->
+
+    <button id="toutEffacer" class="danger">Tout effacer</button>
+    <p class="aide indente" id="aideEffacer">
+        Vide la mémoire : données connues, champs appris, empreintes, recettes
+        apprises et client actif. Les fiches clients, elles, sont dans le code
+        de l'extension : elles ne bougent pas.
+    </p>
+
+    <script src="ontologie.js"></script>
+    <script src="variantes.js"></script>
+    <script src="clients.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>

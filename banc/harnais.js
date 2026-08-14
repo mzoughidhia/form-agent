@@ -168,7 +168,13 @@
             }
 
             const etat = await new Promise((suite) => {
-                chrome.storage.local.get(["profil", "appris", "formulaires"], suite);
+                chrome.storage.local.get(
+                    [
+                        "profil", "appris", "formulaires", "recettes",
+                        "clientActif", "complements", "strict"
+                    ],
+                    suite
+                );
             });
 
             return await new Promise((suite) => {
@@ -177,12 +183,37 @@
                         action: "remplir",
                         profil: etat.profil || {},
                         appris: etat.appris || {},
-                        formulaires: etat.formulaires || {}
+                        formulaires: etat.formulaires || {},
+                        recettes: etat.recettes || {},
+                        clientActif: etat.clientActif || null,
+                        complements: etat.complements || {},
+                        strict: Boolean(etat.strict)
                     },
                     {},
                     suite
                 );
             });
+        },
+
+        // Attendre que l extension ait REELLEMENT enregistre, plutot
+        // qu une duree fixe : Chrome ralentit les minuteurs des onglets
+        // en arriere-plan, et un sleep de 800 ms arrivait avant la
+        // sauvegarde. Le banc devenait faussement rouge.
+        async attendreEnregistrement(maximum) {
+            const limite = maximum || 5000;
+            const debut = Date.now();
+            const avant = JSON.stringify(stockage);
+
+            while (Date.now() - debut < limite) {
+                await new Promise((suite) => setTimeout(suite, 120));
+
+                if (JSON.stringify(stockage) !== avant) {
+                    await new Promise((suite) => setTimeout(suite, 150));
+                    return true;
+                }
+            }
+
+            return false;
         },
 
         lire,

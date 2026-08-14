@@ -69,6 +69,9 @@
 </div>
 
 <script src="harnais.js"></script>
+<script src="../prototype/ontologie.js"></script>
+<script src="../prototype/variantes.js"></script>
+<script src="../prototype/compagnies.js"></script>
 <script src="../prototype/content.js"></script>
 <script>
 // ---------------------------------------------------------------------------
@@ -129,7 +132,7 @@ async function scenario() {
     Banc.saisir("#prenom", "Jean");
     Banc.saisir("#energie", "Essence");
     Banc.saisir("#situation", "Marié(e)");
-    await Banc.attendre(800);
+    await Banc.attendreEnregistrement();
 
     Banc.vider();
     etatDuCadre = "";

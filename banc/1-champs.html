@@ -105,6 +105,9 @@
 </div>
 
 <script src="harnais.js"></script>
+<script src="../prototype/ontologie.js"></script>
+<script src="../prototype/variantes.js"></script>
+<script src="../prototype/compagnies.js"></script>
 <script src="../prototype/content.js"></script>
 <script>
 const SAISIE = [
@@ -128,7 +131,7 @@ async function scenario() {
 
     SAISIE.forEach(([cible, valeur]) => Banc.saisir(cible, valeur));
 
-    await Banc.attendre(800);          // DELAI_ENREGISTREMENT = 600 ms
+    await Banc.attendreEnregistrement();          // DELAI_ENREGISTREMENT = 600 ms
     Banc.vider();
 
     const reponse = await Banc.remplir();
@@ -166,7 +169,7 @@ function etatMemoire(texte, bon) {
 document.getElementById("pas1").addEventListener("click", async () => {
     SAISIE.forEach(([cible, valeur]) => Banc.saisir(cible, valeur));
     etatMemoire("saisi — l'extension enregistre dans 600 ms", false);
-    await Banc.attendre(800);
+    await Banc.attendreEnregistrement();
     etatMemoire("enregistré", true);
 });
 

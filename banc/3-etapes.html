@@ -93,6 +93,9 @@
 </div>
 
 <script src="harnais.js"></script>
+<script src="../prototype/ontologie.js"></script>
+<script src="../prototype/variantes.js"></script>
+<script src="../prototype/compagnies.js"></script>
 <script src="../prototype/content.js"></script>
 <script>
 let etapeCourante = 1;
@@ -132,7 +135,7 @@ async function scenario() {
         SAISIE.filter(([, , , etape]) => etape === numero)
             .forEach(([cible, valeur]) => Banc.saisir(cible, valeur));
 
-        await Banc.attendre(800);
+        await Banc.attendreEnregistrement();
     }
 
     // Le courtier envoie le formulaire : c'est le meilleur moment pour figer.

@@ -57,6 +57,9 @@
 </div>
 
 <script src="harnais.js"></script>
+<script src="../prototype/ontologie.js"></script>
+<script src="../prototype/variantes.js"></script>
+<script src="../prototype/compagnies.js"></script>
 <script src="../prototype/content.js"></script>
 <script>
 const DELAI_SERVEUR = 800;
@@ -90,7 +93,7 @@ async function scenario() {
 
     // --- 1. apprentissage sur les champs immédiats -------------------------
     Banc.saisir("#prenom", "Jean");
-    await Banc.attendre(800);
+    await Banc.attendreEnregistrement();
 
     // --- 2. on remplit AVANT que les champs différés n'arrivent ------------
     Banc.vider();
@@ -117,7 +120,7 @@ async function scenario() {
     await Banc.attendre(DELAI_SERVEUR + 200);
     Banc.saisir("#mail", "jean.dupont@exemple.fr");
     Banc.saisir("#tel", "0612345678");
-    await Banc.attendre(800);
+    await Banc.attendreEnregistrement();
     Banc.vider();
 
     reponse = await Banc.remplir();
